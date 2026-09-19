@@ -1,0 +1,166 @@
+CONSENSO METODOLÓGICO
+Índice de Exposição e Potencial de Benefício por IA (Ex-Ante) — Empresas da B3
+================================================================================
+
+Fonte: síntese do Plano + respostas Gemini, GPT, Grok e Claude.
+
+
+1. O PONTO DE PARTIDA (CONSENSO METODOLÓGICO)
+---------------------------------------------
+
+O indicador NÃO mede “quanto a empresa já gasta com IA/TI”.
+Ele mede, EX-ANTE:
+
+  1) Onde a estrutura de custos/ativos permite ganho (teto de eficiência)
+  2) Se a empresa consegue financiar a adoção (viabilidade)
+  3) Opcionalmente, se já tem base digital mínima (capacidade de absorção)
+
+ATENÇÃO — tensão entre as respostas:
+  - Grok e Claude privilegiam Intangível/Software como núcleo.
+  - Isso é útil, mas como CAPACIDADE/MATURIDADE, não como proxy principal
+    de exposição.
+  - Se Intangível for o núcleo, o índice vira “quem já é digital”, e não
+    “quem tem teto de margem a expandir com IA” — que é o diferencial do Plano.
+
+
+2. CONSENSO: 3 BLOCOS DE LINHAS (NÃO MISTURAR)
+----------------------------------------------
+
+--------------------------------------------------------------------------------
+BLOCO A — EXPOSIÇÃO / TETO DE OPORTUNIDADE (NÚCLEO DO ÍNDICE)
+--------------------------------------------------------------------------------
+São as linhas que a IA pode comprimir ou otimizar.
+Prioridade alta e alinhadas ao algoritmo original do Plano.
+
+Prioridade   | Linha                                      | Fonte      | Por quê
+-------------|--------------------------------------------|------------|--------
+Alta         | Despesas gerais e administrativas (SG&A)   | DRE        | Colarinho branco / processos cognitivos (GenAI, RPA)
+Alta         | Despesas com vendas / comerciais           | DRE        | Atendimento, churn, precificação, recomendação
+Alta         | CPV / COGS                                 | DRE        | Manutenção preditiva, qualidade, eficiência operacional
+Alta         | Despesas com pessoal (salários + encargos) | Notas / DRE| Melhor proxy de automação de produtividade
+Média-Alta   | PDD / PeLD                                 | DRE / Notas| Crítico em bancos, varejo, serviços (ML de crédito/fraude)
+Média        | Estoques                                   | BP         | Previsão de demanda → PME ↓ → liberação de caixa
+
+NORMALIZAÇÃO OBRIGATÓRIA:
+  Todas as linhas do Bloco A devem ser divididas pela
+  Receita Operacional Líquida (ROL).
+  Isso elimina efeito de porte e permite comparar empresas diferentes.
+
+FATOR α (SUSCETIBILIDADE):
+  Não tratar CPV como igualmente “automatizável” que SG&A.
+  Matéria-prima bruta ≠ processos administrativos.
+  O α é o segredo metodológico (e de proteção intelectual / trade secret).
+
+
+--------------------------------------------------------------------------------
+BLOCO B — VIABILIDADE FINANCEIRA (FILTRO / PONDERAÇÃO)
+--------------------------------------------------------------------------------
+Sem isso, o índice ranqueia “potencial teórico” de empresas sem capacidade
+de investir.
+
+Linha                                      | Fonte     | Uso
+-------------------------------------------|-----------|--------------------------
+Caixa e equivalentes (+ aplicações líquidas)| BP        | Capacidade imediata de investir
+Dívida líquida / EBITDA                    | BP + DRE  | Restrição de alavancagem
+Fluxo de caixa operacional / FCF           | DFC       | Relevância econômica do benefício
+EBITDA / margem EBITDA                     | DRE       | Base para traduzir ganho em margem
+
+
+--------------------------------------------------------------------------------
+BLOCO C — CAPACIDADE DE ABSORÇÃO (SECUNDÁRIO, NÃO NÚCLEO)
+--------------------------------------------------------------------------------
+Aqui entram as contribuições de Grok, Claude e GPT.
+São PONDERAÇÃO COMPLEMENTAR, não o coração do score.
+
+Linha                                      | Fonte        | Uso
+-------------------------------------------|--------------|--------------------------
+Software / sistemas (dentro de Intangível) | BP + Notas   | Base digital instalada
+Ativo intangível (desenvolvimento capitalizado)| BP + Notas| Intensidade tecnológica
+P&D (quando divulgado)                     | DRE / Notas  | Inovação complementar
+CAPEX / TI (quando aberto)                 | DFC / Notas  | Capacidade de execução
+Goodwill / participações em tech           | BP           | Sinal fraco e ruidoso — usar com parcimônia
+
+POR QUE NÃO É NÚCLEO:
+  Na B3, software/IA costuma ir para opex/nuvem, não para o balanço.
+  Usar só Intangível:
+    - SUBESTIMA quem consome IA via nuvem
+    - SUPERESTIMA quem capitalizou software legado
+
+
+3. FÓRMULA CONCEITUAL DE CONSENSO
+---------------------------------
+
+  Score_i = [ Σ_k ( L_i,k / ROL_i × α_k ) ]  ×  F_i^fin  ×  (1 + λ · R_i)
+
+Onde:
+  - Σ (L/ROL × α)  = Exposição (Bloco A)
+  - F^fin          = Viabilidade financeira (Bloco B)
+  - (1 + λ · R)    = Readiness (Bloco C) — opcional e leve
+
+Detalhamento:
+  L_k   = SG&A, Vendas, Pessoal, CPV (ajustado), PDD, Estoques
+  F^fin = função de caixa e alavancagem (penaliza Dívida Líquida/EBITDA alto)
+  R     = proxy de intangível tech / software
+  λ     = peso pequeno, para não distorcer o caráter ex-ante
+
+Isso preserva a tese do mestrado:
+  estrutura de custos auditada → teto de margem,
+  e ainda incorpora readiness sem cair em AI-washing narrativo.
+
+
+4. O QUE DEIXAR DE FORA (OU DEIXAR PARA ETAPA 2)
+------------------------------------------------
+
+  - Menções a IA em MD&A, teleconferências, press releases
+    → usar como EX-POST / validação, não na construção do índice
+
+  - “Despesas com TI” genéricas sem breakdown
+    → só se houver nota confiável e comparável entre empresas
+
+  - Goodwill total sem filtro de aquisições tech
+    → ruído demais
+
+
+5. LISTA MÍNIMA PRÁTICA (CVM/DFP) PARA COMEÇAR
+----------------------------------------------
+
+ESSENCIAIS (v1 do índice):
+  1. Receita líquida
+  2. SG&A
+  3. Despesas com vendas
+  4. CPV / COGS
+  5. Pessoal (notas)
+  6. PDD (quando material)
+  7. Estoques
+  8. Caixa
+  9. Dívida líquida e EBITDA
+
+COMPLEMENTARES (v1.1):
+  10. Software / intangível (notas)
+  11. P&D / CAPEX tech (quando existir)
+  12. FCO (fluxo de caixa operacional)
+
+
+6. VEREDITO
+-----------
+
+O núcleo deve ser a intensidade de custos afetáveis pela IA / receita
+(SG&A, vendas, pessoal, CPV ponderado, PDD, estoques), ajustado por
+capacidade financeira.
+
+Intangível/Software entram como ajuste leve de readiness, não como
+linha principal.
+
+Isso une:
+  - Gemini (fiel ao Plano)
+  - GPT (três dimensões: exposição, benefício, capacidade)
+  - e corrige o viés de Grok/Claude de transformar o índice em
+    “estoque de software”.
+
+
+7. PRÓXIMO PASSO SUGERIDO
+-------------------------
+
+Montar a matriz completa:
+  variável × linha CVM/DFP × fórmula × α sugerido × justificativa teórica
+  (pronta para a metodologia da dissertação).

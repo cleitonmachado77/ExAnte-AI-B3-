@@ -1,0 +1,508 @@
+BASE TEÓRICA ACADÊMICA
+Índice de Exposição e Potencial de Benefício por IA (Ex-Ante) — Empresas da B3
+================================================================================
+
+Objetivo deste arquivo:
+  Amparar a escolha de LINHAS e SUBLINHAS contábeis com literatura publicada,
+  para que a metodologia não seja criticada como "ideia da cabeça".
+
+Estrutura de cada item:
+  - Citação
+  - Ideia central
+  - Como usar na dissertação
+  - Linha(s) / sublinha(s) que ampara
+
+
+--------------------------------------------------------------------------------
+0. POSICIONAMENTO GERAL (FRASE-CHAVE PARA A BANCA)
+--------------------------------------------------------------------------------
+
+A literatura de exposição à IA mede, em geral, potencial econômico via
+OCUPAÇÕES e TAREFAS (não via plano de contas).
+
+Esta pesquisa OPERACIONALIZA essa tradição para o nível da firma na B3,
+usando a estrutura de CUSTOS E DESPESAS AUDITADAS (CVM/DFP) como PROXY
+firm-level de exposição e potencial de benefício ex-ante.
+
+Justificativa da proxy:
+  No Brasil não há breakdown ocupacional público, comparável e contínuo
+  para todas as companhias abertas. As demonstrações padronizadas da CVM
+  oferecem a melhor base auditada e comparável disponível.
+
+Camadas metodológicas (declarar explicitamente):
+  1) Fundamentação teórica  → exposição a IA = potencial sobre tarefas
+  2) Operacionalização      → intensidade de custos afetáveis / receita
+  3) Validação empírica     → correlacionar com exposição setorial e outcomes
+
+
+================================================================================
+1. TRADIÇÃO-MÃE: EXPOSIÇÃO À IA / AUTOMAÇÃO (FUNDAMENTO DO ÍNDICE)
+================================================================================
+
+--------------------------------------------------
+1.1 Felten, Raj & Seamans (2021)
+--------------------------------------------------
+Citação:
+  Felten, E., Raj, M., & Seamans, R. (2021). Occupational, industry, and
+  geographic exposure to artificial intelligence: A novel dataset and its
+  potential uses. Strategic Management Journal, 42(12), 2195–2217.
+
+Ideia central:
+  Constrói o AIOE (AI Occupational Exposure) e agrega para indústria (AIIE)
+  e geografia (AIGE). Descreve caminhos para medida firm-level ponderando
+  ocupações pelo mix de emprego da empresa.
+
+Como usar na dissertação:
+  Âncora principal de "exposição à IA". Seu índice é a tradução contábil
+  dessa lógica para a B3 (custos em vez de headcount ocupacional).
+  Validação sugerida: correlacionar o score médio setorial B3 com AIIE.
+
+Linhas/sublinhas amparadas:
+  - Despesas com pessoal / ROL
+  - SG&A / ROL
+  - Despesas com vendas / ROL
+  - α setorial (derivado de intensidade ocupacional do setor)
+
+--------------------------------------------------
+1.2 Felten, Raj & Seamans (2018) — precursor
+--------------------------------------------------
+Citação:
+  Felten, E. W., Raj, M., & Seamans, R. (2018). A method to link advances
+  in artificial intelligence to occupational abilities.
+  AEA Papers and Proceedings, 108, 54–57.
+
+Ideia central:
+  Liga capacidades de IA a abilities ocupacionais (O*NET).
+
+Como usar:
+  Fundamenta a ideia de que nem toda ocupação/custo é igualmente afetável
+  → justifica fator de suscetibilidade α diferenciado.
+
+Linhas/sublinhas:
+  - α por bucket (cognitivo, atendimento, físico, contractual)
+
+--------------------------------------------------
+1.3 Eloundou, Manning, Mishkin & Rock (2023/2024)
+--------------------------------------------------
+Citação:
+  Eloundou, T., Manning, S., Mishkin, P., & Rock, D. (2023).
+  GPTs are GPTs: An early look at the labor market impact potential of
+  large language models. arXiv:2303.10130.
+  (Também versões posteriores / working papers NBER.)
+
+Ideia central:
+  Mede exposição a LLMs por tarefas. Grande parte da força de trabalho tem
+  fração material de tarefas potencialmente afetadas; LLMs como tecnologia
+  de propósito geral (GPT no sentido econômico).
+
+Como usar:
+  Justifica o foco em custos de "colarinho branco" e processos de linguagem/
+  documento/atendimento — núcleo do SG&A e vendas.
+
+Linhas/sublinhas:
+  - SG&A (cognitivo/documental)
+  - Despesas com vendas / SAC / comercial
+  - Pessoal administrativo e de escritório
+  - Bucket: jurídico, contábil, RH administrativo, atendimento
+
+--------------------------------------------------
+1.4 Labaschin, Eloundou, Manning, Mishkin & Rock (2025)
+--------------------------------------------------
+Citação:
+  Labaschin, B., Eloundou, T., Manning, S., Mishkin, P., & Rock, D. (2025).
+  Extending "GPTs Are GPTs" to Firms. AEA Papers and Proceedings, 115, 51–55.
+
+Ideia central:
+  Estende exposição a LLMs para o nível da firma (ocupações × emprego).
+
+Como usar:
+  Mostra que o campo já busca medida firm-level. Seu trabalho contribui com
+  proxy CONTÁBIL para o contexto brasileiro (CVM/B3).
+
+Linhas/sublinhas:
+  - Justifica construção de score por empresa (não só setorial)
+
+--------------------------------------------------
+1.5 Brynjolfsson, Mitchell & Rock / suitability for ML (2018+)
+--------------------------------------------------
+Citação:
+  Brynjolfsson, E., Mitchell, T., & Rock, D. (2018). What can machine
+  learning do? Workforce implications. Science / related works on
+  "Suitability for Machine Learning" (SML).
+
+Ideia central:
+  Nem toda tarefa é igualmente adequada a ML; há rubrica de suitability.
+
+Como usar:
+  Fundamenta α_k e β_j (pesos por linha e por bucket de sublinha).
+  Evita tratar CPV de commodity como se fosse SG&A cognitivo.
+
+Linhas/sublinhas:
+  - Diferenciação α(SG&A) > α(CPV_commodities)
+  - Buckets: rotina cognitiva (alta) vs. físico/contractual (baixa)
+
+--------------------------------------------------
+1.6 Webb (2020)
+--------------------------------------------------
+Citação:
+  Webb, M. (2020). The impact of artificial intelligence on the labor
+  market. Working paper (Stanford).
+
+Ideia central:
+  Expõe ocupações a IA via overlap de patentes/descrições de tarefas.
+
+Como usar:
+  Segunda referência de exposição ocupacional; útil em robustez
+  (comparar rankings setoriais sob métricas alternativas de exposição).
+
+Linhas/sublinhas:
+  - α setorial alternativo em testes de robustez
+
+--------------------------------------------------
+1.7 Frey & Osborne (2017)
+--------------------------------------------------
+Citação:
+  Frey, C. B., & Osborne, M. A. (2017). The future of employment: How
+  susceptible are jobs to computerisation? Technological Forecasting and
+  Social Change, 114, 254–280.
+
+Ideia central:
+  Probabilidade de automação por ocupação (rotinas cognitivas/manuais).
+
+Como usar:
+  Apoia a ideia de "suscetibilidade" e a separação rotina vs. não-rotina.
+  Citar com ressalva: prediz automação ampla; sua pesquisa foca IA/ML/GenAI.
+
+Linhas/sublinhas:
+  - Pessoal / SG&A como base afetável
+  - Penalização de buckets físicos no curto prazo
+
+
+================================================================================
+2. EVIDÊNCIA DE CANAL: ONDE A IA GERA GANHO ECONÔMICO
+================================================================================
+
+--------------------------------------------------
+2.1 Brynjolfsson, Li & Raymond (2023) — GenAI no trabalho
+--------------------------------------------------
+Citação:
+  Brynjolfsson, E., Li, D., & Raymond, L. (2023). Generative AI at Work.
+  NBER Working Paper 31161.
+
+Ideia central:
+  Introdução de assistente GenAI em call center: +~14% produtividade
+  (issues/hora); efeito maior em novatos.
+
+Como usar:
+  Evidência causal de ganho em processo de ATENDIMENTO — traduzível para
+  despesas com vendas/SAC e parte de SG&A de serviços ao cliente.
+
+Linhas/sublinhas:
+  - Despesas com vendas / comerciais
+  - Sublinha: SAC, call center, atendimento, customer operations
+  - Bucket: atendimento_ia (β alto)
+
+--------------------------------------------------
+2.2 ML e risco de crédito / provisões (PDD)
+--------------------------------------------------
+Citações representativas (escolher 2–3 na revisão):
+  - Literatura de ML para PD/ECL sob IFRS 9 / CECL
+  - Estudos de forecast de credit loss e loan-loss provisions com ML
+    (ex.: trabalhos em Research in International Business and Finance;
+     aplicações CECL Federal Reserve working papers; comparações XGBoost/
+     RF/NN para NPL e LLP)
+
+Ideia central:
+  Modelos de ML melhoram previsão de default e informam provisões
+  (expected credit loss). Canal direto para PDD / impairment de crédito.
+
+Como usar:
+  Justifica incluir PDD como linha de potencial de benefício — sobretudo
+  em bancos, financeiras e varejo com carteira de crédito.
+
+Linhas/sublinhas:
+  - PDD / PeLD / impairment de crédito
+  - Sublinha: provisão para créditos de liquidação duvidosa
+  - Condicionar por setor (peso maior em financeiro)
+
+--------------------------------------------------
+2.3 Estoques, forecast e otimização (Operations Research / OM)
+--------------------------------------------------
+Citações (tradição clássica + IA):
+  - Literatura clássica de demand forecasting e inventory optimization
+    (Silver, Pyke, Peterson; Syntetos; etc.)
+  - Extensões modernas com ML para previsão de demanda e supply chain
+
+Ideia central:
+  Melhor previsão reduz estoque de segurança, PME e capital parado.
+
+Como usar:
+  Justifica Estoques no Bloco A como proxy de ineficiência informacional
+  atacável por IA preditiva.
+
+Linhas/sublinhas:
+  - Estoques (BP)
+  - Ratios: Estoques/ROL; PME
+  - Sublinha (se houver): MP, produtos acabados, mercadorias (cicláveis)
+  - Excluir/penalizar estoques estratégicos/regulatórios quando identificáveis
+
+--------------------------------------------------
+2.4 CPV / manutenção preditiva / qualidade / indústria 4.0
+--------------------------------------------------
+Citações (tradição):
+  - Predictive maintenance e qualidade com ML/visão computacional
+  - Industry 4.0 / smart manufacturing reviews
+
+Ideia central:
+  IA reduz downtime, retrabalho e ineficiência operacional — mas NÃO
+  "automatiza" commodity bruta da mesma forma.
+
+Como usar:
+  Incluir CPV com α moderado; preferir sublinhas operacionais quando
+  disponíveis (manutenção, qualidade, logística), não o CPV integral.
+
+Linhas/sublinhas:
+  - CPV / COGS (α moderado)
+  - Sublinha alta: manutenção, qualidade, logística interna
+  - Sublinha baixa: matéria-prima, commodities, royalties fixos
+
+
+================================================================================
+3. CAPACIDADE DE ABSORÇÃO E VIABILIDADE (BLOCOS B E C)
+================================================================================
+
+--------------------------------------------------
+3.1 Cohen & Levinthal (1990) — Absorptive Capacity
+--------------------------------------------------
+Citação:
+  Cohen, W. M., & Levinthal, D. A. (1990). Absorptive capacity: A new
+  perspective on learning and innovation. Administrative Science Quarterly,
+  35(1), 128–152.
+
+Ideia central:
+  Capacidade de reconhecer, assimilar e aplicar conhecimento externo.
+
+Como usar:
+  Fundamenta Bloco C (readiness): ter teto de eficiência ≠ conseguir
+  capturar o benefício. Intangíveis, P&D e base digital entram como
+  moderadores — não como núcleo de exposição.
+
+Linhas/sublinhas:
+  - Ativo intangível / software
+  - P&D / receita
+  - CAPEX tech (quando divulgado)
+
+--------------------------------------------------
+3.2 Restrições financeiras e investimento (tradição de Corporate Finance)
+--------------------------------------------------
+Citações-mãe (escolher conforme orientação):
+  - Fazzari, Hubbard & Petersen (1988) — financing constraints
+  - Kaplan & Zingales (1997) — crítica/medida de constraints
+  - Literatura posterior de cash holdings e investment under uncertainty
+
+Ideia central:
+  Firmas financeiramente constrangidas investem menos, mesmo com
+  oportunidades de NPV positivo.
+
+Como usar:
+  Fundamenta Bloco B: caixa, dívida líquida/EBITDA, FCO como fator de
+  viabilidade da adoção de IA.
+
+Linhas/sublinhas:
+  - Caixa e equivalentes
+  - Dívida líquida / EBITDA
+  - Fluxo de caixa operacional / FCF
+  - Margem EBITDA (relevância econômica do ganho)
+
+--------------------------------------------------
+3.3 Tecnologia de propósito geral e complementaridades
+--------------------------------------------------
+Citações clássicas:
+  - Bresnahan & Trajtenberg (1995) — General Purpose Technologies
+  - Brynjolfsson & Hitt / complementaridades organizacionais
+  - Eloundou et al. (LLMs como GPT econômico)
+
+Ideia central:
+  Benefício da tecnologia depende de complementos (dados, processos,
+  capital humano, organização) e não só da existência da ferramenta.
+
+Como usar:
+  Justifica produto Exposição × Capacidade (e não score só de custos).
+  Também justifica por que AI-washing narrativo não basta.
+
+Linhas/sublinhas:
+  - Estrutura do score composto (A × B × C leve)
+
+
+================================================================================
+4. MAPA RÁPIDO: LINHA → BASE TEÓRICA → FORÇA DO AMPARO
+================================================================================
+
+Linha contábil                         | Força | Âncoras principais
+---------------------------------------|-------|---------------------------
+Pessoal / salários e encargos          | Alta  | Felten; Eloundou; Frey-Osborne
+SG&A (agregado)                        | Alta  | Felten; Eloundou; SML
+Despesas com vendas / SAC              | Alta  | Eloundou; Brynjolfsson-Li-Raymond
+CPV (parcela operacional)              | Média | Predictive maint.; Indústria 4.0; SML
+CPV (commodity / MP)                   | Baixa | — (α baixo; teoria de não-equivalência)
+PDD / crédito                          | Alta* | ML credit risk / IFRS 9 (*setorial)
+Estoques                               | Alta  | Forecasting / inventory OM
+Caixa / alavancagem / FCO              | Alta  | Financing constraints
+Intangível / software / P&D            | Média | Absorptive capacity (readiness)
+Goodwill / M&A tech                    | Baixa | Usar com parcimônia (ruído)
+
+
+================================================================================
+5. SUBLINHAS (BUCKETS): COMO JUSTIFICAR SEM CATÁLOGO CONTÁBIL PRONTO
+================================================================================
+
+A literatura NÃO entrega uma lista universal do tipo:
+  "nas notas da B3, use exatamente estas 27 subcontas".
+
+O que a literatura entrega:
+  classificação por TIPO DE TAREFA / PROCESSO.
+
+Portanto, as sublinhas devem ser apresentadas como TAXONOMIA DERIVADA:
+
+Bucket                    | Lógica teórica              | Exemplos contábeis típicos
+--------------------------|-----------------------------|---------------------------
+Cognitivo / documental    | Alta exposição LLM/AIOE     | jurídico, contábil, compliance doc., RH adm.
+Atendimento / comercial   | Evidência GenAI at work     | SAC, call center, CRM operacional
+Backoffice transacional   | Alta SML / rotina cognitiva | faturamento, AP/AR, conciliação
+Análise / decisão         | ML preditivo                | crédito, pricing, planning
+Operacional industrial    | Predictive maint./visão     | manutenção, qualidade, logística
+Físico / contractual      | Baixa exposição curto prazo | aluguel, condomínio, seguros, depreciação
+Insumo / commodity        | Baixa GenAI direta          | MP, energia base, royalties fixos
+
+Regra acadêmica de defesa:
+  - Pesos β dos buckets são HIPÓTESES OPERACIONAIS calibradas
+  - Sempre acompanhar de TESTES DE SENSIBILIDADE (±20% nos pesos)
+  - Quando a nota não abrir sublinha → α setorial da linha-mãe
+    (Felten AIIE / Eloundou agregado setorial)
+
+
+================================================================================
+6. O QUE É "TEORIA" VS. O QUE É "SUA CONTRIBUIÇÃO"
+================================================================================
+
+JÁ ESTABELECIDO NA LITERATURA:
+  - Conceito de AI exposure (ocupação/tarefa/indústria)
+  - Heterogeneidade de suscetibilidade entre tarefas
+  - Canais empíricos (atendimento, crédito, forecast, manutenção)
+  - Absorptive capacity e financing constraints
+
+SUA CONTRIBUIÇÃO (declarar como tal):
+  - Proxy contábil ex-ante para firmas da B3 via CVM/DFP
+  - Catálogo de linhas + taxonomia de buckets compatível com notas BR
+  - Fórmula Score = Exposição × Viabilidade × Readiness(leve)
+  - Calibração de α/β e validação no mercado brasileiro
+  - (Se for o caso) teste se o mercado precifica o potencial (Q de Tobin)
+
+NÃO PRECISA "PROVAR" COM UM PAPER ÚNICO:
+  - O valor exato de α_SG&A = 0,35 (exemplo)
+  Isso se justifica + se testa por robustez — padrão em índices compostos.
+
+
+================================================================================
+7. VALIDAÇÃO EMPÍRICA SUGERIDA (FECHA O ARGUMENTO)
+================================================================================
+
+Para blindar a banca, planejar pelo menos:
+
+  V1. Validade de constructo (setorial)
+      Correlacionar média setorial do seu índice com AIIE (Felten)
+      ou exposição setorial derivada de Eloundou.
+
+  V2. Validade discriminante
+      Setores intensivos em colarinho branco (bancos, serviços, seguros)
+      devem rankear acima de commodities puras no Bloco A —
+      ceteris paribus.
+
+  V3. Robustez de pesos
+      Reestimar rankings com α/β alternativos; reportar estabilidade
+      do top/bottom quartil.
+
+  V4. (Etapa ex-post / hipótese de mestrado)
+      Relação do índice ex-ante com margem EBITDA, ROIC, produtividade
+      ou Q de Tobin — sem confundir construção do índice com resultado.
+
+
+================================================================================
+8. ROTEIRO DE CITAÇÃO NO CAPÍTULO DE REVISÃO DE LITERATURA
+================================================================================
+
+Sugestão de ordem das seções:
+
+  8.1 IA como tecnologia de propósito geral e impactos econômicos
+      → Bresnahan & Trajtenberg; Brynjolfsson; Eloundou et al.
+
+  8.2 Medidas de exposição à IA (ocupação → indústria → firma)
+      → Frey & Osborne; Webb; Felten et al.; Labaschin et al.
+
+  8.3 Canais de benefício econômico (custos, risco, operações)
+      → Brynjolfsson-Li-Raymond; ML crédito; inventory/OM; Indústria 4.0
+
+  8.4 Adoção tecnológica: absorção e restrições financeiras
+      → Cohen & Levinthal; Fazzari et al. / Kaplan-Zingales
+
+  8.5 Lacuna: ausência de proxy contábil ex-ante comparável na B3
+      → abre a contribuição da dissertação
+
+  8.6 Operacionalização: linhas CVM/DFP + taxonomia de buckets
+      → liga teoria → catálogo de variáveis do algoritmo
+
+
+================================================================================
+9. REFERÊNCIAS MÍNIMAS PARA COMEÇAR A BIBLIOGRAFIA
+================================================================================
+
+Bresnahan, T. F., & Trajtenberg, M. (1995). General purpose technologies:
+  Engines of growth? Journal of Econometrics.
+
+Brynjolfsson, E., Li, D., & Raymond, L. (2023). Generative AI at Work.
+  NBER Working Paper 31161.
+
+Brynjolfsson, E., Mitchell, T., & Rock, D. (2018). What can machine
+  learning do? Workforce implications. (e trabalhos correlatos de SML).
+
+Cohen, W. M., & Levinthal, D. A. (1990). Absorptive capacity: A new
+  perspective on learning and innovation. Administrative Science Quarterly.
+
+Eloundou, T., Manning, S., Mishkin, P., & Rock, D. (2023). GPTs are GPTs.
+  arXiv:2303.10130.
+
+Fazzari, S. M., Hubbard, R. G., & Petersen, B. C. (1988). Financing
+  constraints and corporate investment. Brookings Papers on Economic Activity.
+
+Felten, E., Raj, M., & Seamans, R. (2021). Occupational, industry, and
+  geographic exposure to artificial intelligence. Strategic Management Journal.
+
+Felten, E. W., Raj, M., & Seamans, R. (2018). A method to link advances
+  in artificial intelligence to occupational abilities. AEA P&P.
+
+Frey, C. B., & Osborne, M. A. (2017). The future of employment.
+  Technological Forecasting and Social Change.
+
+Kaplan, S. N., & Zingales, L. (1997). Do investment-cash flow sensitivities
+  provide useful measures of financing constraints? Quarterly Journal of Economics.
+
+Labaschin, B., Eloundou, T., Manning, S., Mishkin, P., & Rock, D. (2025).
+  Extending "GPTs Are GPTs" to Firms. AEA Papers and Proceedings.
+
+Webb, M. (2020). The impact of artificial intelligence on the labor market.
+  Working paper.
+
+
+--------------------------------------------------------------------------------
+NOTA FINAL
+--------------------------------------------------------------------------------
+
+Com este mapa, a escolha das LINHAS fica ancorada em tradição publicada.
+A escolha das SUBLINHAS fica ancorada em taxonomia de tarefas (não em
+arbitrariedade contábil).
+Os pesos α/β ficam explicitados como parâmetros calibráveis com robustez —
+padrão acadêmico aceitável para índices compostos.
+
+Próximo artefato sugerido:
+  catalogo_variaveis.csv (VAR_ID × linha-mãe × bucket × β × âncora teórica ×
+  fonte CVM/DFP × sinônimos de nota).

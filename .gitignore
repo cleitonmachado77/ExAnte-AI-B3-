@@ -1,0 +1,21 @@
+# DFP bruta (grande) — não versionar
+data/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Temporários
+_formula_imgs/
+*.tmp

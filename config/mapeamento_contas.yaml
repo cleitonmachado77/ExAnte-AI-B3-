@@ -1,0 +1,87 @@
+receita:
+  cd_conta:
+  - 3.01.01
+  - '3.01'
+  ds_patterns:
+  - (?i)receita operacional l[ií]quida
+  - (?i)^receita de venda
+  - (?i)receita l[ií]quida
+cpv:
+  cd_conta:
+  - '3.02'
+  ds_patterns:
+  - (?i)^custo dos (?:bens|produtos|servi[cç]os)
+  - (?i)^custos dos
+vendas:
+  cd_conta:
+  - 3.04.01
+  ds_patterns:
+  - (?i)despesas com vendas
+  - (?i)despesas de vendas
+  - (?i)despesas comerciais
+sga:
+  cd_conta:
+  - 3.04.02
+  ds_patterns:
+  - (?i)gerais e administrativas
+  - (?i)despesas administrativas
+  - (?i)despesas gerais
+ebit:
+  cd_conta:
+  - '3.05'
+  ds_patterns:
+  - (?i)resultado antes do resultado financeiro
+  - (?i)lucro \(?:preju[ií]zo\) antes
+pdd:
+  cd_conta: []
+  ds_patterns:
+  - (?i)provis[aã]o.*(cr[eé]dito|devedor|liquidação duvidosa|perda)
+  - (?i)perda.*(cr[eé]dito|inadimpl)
+  - (?i)\bPDD\b
+  - (?i)\bPeLD\b
+caixa:
+  cd_conta:
+  - 1.01.01
+  ds_patterns:
+  - (?i)^caixa e equivalentes
+  - (?i)^caixa$
+estoques:
+  cd_conta:
+  - 1.01.04
+  ds_patterns:
+  - (?i)^estoques$
+ativo_total:
+  cd_conta:
+  - '1'
+  ds_patterns:
+  - (?i)^ativo total$
+intangivel:
+  cd_conta:
+  - 1.02.02
+  ds_patterns:
+  - (?i)^intang[ií]vel
+software:
+  cd_conta: []
+  ds_patterns:
+  - (?i)software
+  - (?i)programa.?s? de computador
+  - (?i)sistemas de informa
+divida:
+  cd_conta:
+  - 2.01.04
+  - 2.02.01
+  ds_patterns:
+  - (?i)empr[eé]stimos e financiamentos
+  - (?i)deb[eê]ntures
+  - (?i)financiamentos
+pessoal_dva:
+  cd_conta: []
+  ds_patterns:
+  - (?i)^pessoal$
+  - (?i)remunera[cç][aã]o.*(?:pessoal|trabalho)
+  - (?i)sal[aá]rios.*encargos
+depreciacao:
+  cd_conta: []
+  ds_patterns:
+  - (?i)deprecia[cç][aã]o.*amortiza
+  - (?i)^deprecia[cç][aã]o

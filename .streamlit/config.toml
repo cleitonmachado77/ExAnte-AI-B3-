@@ -1,0 +1,7 @@
+[client]
+toolbarMode = "minimal"
+
+[server]
+runOnSave = true
+headless = true
+enableStaticServing = true

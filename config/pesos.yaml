@@ -1,0 +1,130 @@
+alpha_base:
+  pessoal: 0.35
+  sga: 0.3
+  vendas: 0.32
+  pdd: 0.4
+  cpv: 0.1
+  estoques: 0.18
+setor_mult:
+  financeiro: 1.25
+  tecnologia: 1.2
+  varejo: 1.1
+  saude_educacao: 1.05
+  industria: 1.0
+  utilities: 0.9
+  construcao: 0.85
+  commodities: 0.75
+  outros: 1.0
+setor_keywords:
+  financeiro:
+  - BANCO
+  - BANK
+  - SEGUR
+  - FINANC
+  - CREDITO
+  - CRÉDITO
+  - CAPITALIZ
+  - PREV
+  tecnologia:
+  - SOFTWARE
+  - TECH
+  - DIGITAL
+  - TI
+  - DATA
+  - CLOUD
+  - SAP
+  - TOTVS
+  varejo:
+  - LOJAS
+  - VAREJ
+  - MAGAZINE
+  - AREZZO
+  - RENNER
+  - AMERICANAS
+  - VIA
+  - CASAS BAHIA
+  - MERCADO
+  saude_educacao:
+  - SAUDE
+  - SAÚDE
+  - HOSP
+  - FARMA
+  - EDUC
+  - UNIVERS
+  - ODONT
+  - DIAGNOST
+  industria:
+  - INDUST
+  - METAL
+  - MAQUIN
+  - EMBRAER
+  - WEG
+  - RANDON
+  - TUPY
+  utilities:
+  - ENERGIA
+  - ELETR
+  - SANEAMENTO
+  - TELECOM
+  - TIM
+  - VIVO
+  - OI
+  - CEMIG
+  - COPEL
+  - SABESP
+  construcao:
+  - CONSTR
+  - INCORPOR
+  - MRV
+  - CYRELA
+  - TECNISA
+  - DIRECIONAL
+  commodities:
+  - PETRO
+  - VALE
+  - MINER
+  - SIDER
+  - ACO
+  - AÇO
+  - AGRO
+  - SUCOS
+  - PAPEL
+  - CELULOSE
+  - OIL
+  - GAS
+  - GÁS
+  - CSN
+  - GERDAU
+  - SUZANO
+  - KLABIN
+alpha_max: 0.6
+f_caixa:
+- max_exclusive: 0.03
+  valor: 0.75
+- max_exclusive: 0.08
+  valor: 0.9
+- max_exclusive: null
+  valor: 1.0
+g_alavancagem:
+- max_exclusive: 2.0
+  valor: 1.0
+- max_exclusive: 3.5
+  valor: 0.7
+- max_exclusive: null
+  valor: 0.4
+g_ebitda_negativo: 0.25
+min_receita: 50000000.0
+max_linha_sobre_receita: 3.0
+excluir_recuperacao_judicial: true
+exigir_ao_menos_uma_de:
+- sga
+- vendas
+- pessoal
+usar_consolidado: true
+normalizar_score_0_100: true
+rho_captura: 0.7
+phi_execucao_base: 0.85
+lambda_ready: 0.1
+w_software: 0.5
+w_intangivel: 0.2
+w_ped: 0.3
