@@ -1,11 +1,21 @@
+# Mapeamento CVM/DFP → variáveis do índice.
+#
+# Regras de seleção (extract.py):
+#   • Se alguma linha casar por CD_CONTA, SÓ essas linhas são usadas (os padrões
+#     de texto servem de fallback para planos de contas não padronizados).
+#   • Variáveis "de escolha" pegam a linha mais agregada (conta fixa, menor
+#     profundidade). Variáveis "de soma" (agregar: true ou pdd/divida/software/
+#     depreciacao/pessoal_dva) somam as linhas casadas SEM contar pai + filho.
+#   • A seção `financeiro` sobrescreve o mapeamento para instituições financeiras
+#     (plano de contas com 3.01 = Receitas da Intermediação Financeira).
+#     `null` = variável não aplicável a esse template.
+
 receita:
   cd_conta:
-  - 3.01.01
-  - '3.01'
+  - '3.01'                     # Receita de Venda de Bens e/ou Serviços (já líquida)
   ds_patterns:
-  - (?i)receita operacional l[ií]quida
+  - (?i)^receita operacional l[ií]quida
   - (?i)^receita de venda
-  - (?i)receita l[ií]quida
 cpv:
   cd_conta:
   - '3.02'
@@ -31,14 +41,26 @@ ebit:
   - '3.05'
   ds_patterns:
   - (?i)resultado antes do resultado financeiro
-  - (?i)lucro \(?:preju[ií]zo\) antes
 pdd:
   cd_conta: []
   ds_patterns:
-  - (?i)provis[aã]o.*(cr[eé]dito|devedor|liquidação duvidosa|perda)
+  - (?i)provis[aã]o.*(cr[eé]dito|devedor|liquida[cç][aã]o duvidosa|perda)
   - (?i)perda.*(cr[eé]dito|inadimpl)
   - (?i)\bPDD\b
   - (?i)\bPeLD\b
+pdd_dva:
+  # Linha fixa da DVA presente em quase todas as companhias — fallback quando a
+  # DRE não abre a PDD em linha própria.
+  cd_conta:
+  - 7.01.04
+  ds_patterns:
+  - (?i)provis[aã]o/revers[aã]o de cr[eé]ds?\.? liquida[cç][aã]o duvidosa
+receita_dva:
+  # Só para checagem de consistência (alerta_receita): DVA 7.01 vs DRE 3.01
+  cd_conta:
+  - '7.01'
+  ds_patterns:
+  - (?i)^receitas$
 caixa:
   cd_conta:
   - 1.01.01
@@ -57,9 +79,9 @@ ativo_total:
   - (?i)^ativo total$
 intangivel:
   cd_conta:
-  - 1.02.02
+  - 1.02.04                    # Intangível (1.02.02 é Investimentos!)
   ds_patterns:
-  - (?i)^intang[ií]vel
+  - (?i)^intang[ií]ve(?:l|is)$
 software:
   cd_conta: []
   ds_patterns:
@@ -68,20 +90,70 @@ software:
   - (?i)sistemas de informa
 divida:
   cd_conta:
-  - 2.01.04
-  - 2.02.01
+  - 2.01.04                    # Empréstimos e Financiamentos — circulante
+  - 2.02.01                    # Empréstimos e Financiamentos — não circulante
   ds_patterns:
-  - (?i)empr[eé]stimos e financiamentos
-  - (?i)deb[eê]ntures
-  - (?i)financiamentos
+  - (?i)^empr[eé]stimos e financiamentos$
+  - (?i)^deb[eê]ntures$
 pessoal_dva:
-  cd_conta: []
+  cd_conta:
+  - 7.08.01
   ds_patterns:
   - (?i)^pessoal$
   - (?i)remunera[cç][aã]o.*(?:pessoal|trabalho)
   - (?i)sal[aá]rios.*encargos
 depreciacao:
-  cd_conta: []
+  cd_conta:
+  - 7.04.01
   ds_patterns:
   - (?i)deprecia[cç][aã]o.*amortiza
   - (?i)^deprecia[cç][aã]o
+fco:
+  # DFC (método indireto ou direto): caixa líquido das atividades operacionais
+  cd_conta:
+  - '6.01'
+  ds_patterns:
+  - (?i)^caixa l[ií]quido (?:das )?atividades operacionais
+
+# ---------------------------------------------------------------------------
+# Instituições financeiras (bancos, seguradoras) — plano de contas distinto
+# ---------------------------------------------------------------------------
+financeiro:
+  receita:
+    # Receita operacional ≈ intermediação financeira + prestação de serviços
+    agregar: true
+    cd_conta: []
+    ds_patterns:
+    - (?i)^receitas? d[ae] intermedia[cç][aã]o financeira$
+    - (?i)^receitas? de presta[cç][aã]o de servi[cç]os
+  cpv: null                    # 3.02 é despesa de captação (juros), não CPV
+  vendas: null                 # 3.04.01 é PDD ou receita de serviços em bancos
+  sga:
+    cd_conta: []
+    ds_patterns:
+    - (?i)^outras despesas (?:de )?administrativas
+    - (?i)^despesas administrativas
+  ebit:
+    cd_conta:
+    - '3.05'
+    ds_patterns:
+    - (?i)resultado antes dos tributos
+  pdd:
+    agregar: true
+    cd_conta: []
+    ds_patterns:
+    - (?i)perdas? esperadas?
+    - (?i)perda\)? de cr[eé]dito esperada
+    - (?i)provis[aã]o para (?:perdas?|cr[eé]ditos)
+    - (?i)provis[aã]o.*liquida[cç][aã]o duvidosa
+  estoques: null
+  divida: null                 # captação (depósitos) não é "empréstimos e financiamentos"
+  caixa:
+    cd_conta:
+    - '1.01'
+    ds_patterns:
+    - (?i)^caixa e equivalentes
+  intangivel:
+    cd_conta: []
+    ds_patterns:
+    - (?i)^intang[ií]ve(?:l|is)$

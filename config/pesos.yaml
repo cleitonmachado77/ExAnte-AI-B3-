@@ -15,25 +15,46 @@ setor_mult:
   construcao: 0.85
   commodities: 0.75
   outros: 1.0
+# Palavras-chave casam no INÍCIO de palavra (sem acento, maiúsculas); tokens com
+# até 3 letras exigem palavra inteira (evita "TI" em PARTICIPAÇÕES, "OI" em GOIÁS…).
+# A ordem dos setores importa: a primeira batida define o setor.
+# Empresas com plano de contas de instituição financeira são sempre "financeiro".
 setor_keywords:
   financeiro:
   - BANCO
+  - BCO
   - BANK
   - SEGUR
+  - RESSEGUR
   - FINANC
   - CREDITO
-  - CRÉDITO
   - CAPITALIZ
-  - PREV
+  - PREVID
+  - ITAU
+  - BRADESCO
+  - SANTANDER
+  - PACTUAL
+  - BANESTES
+  - BANRISUL
+  - NU HOLDINGS
+  - INTER & CO
+  - B3 S.A
+  - CIELO
+  - STONE
   tecnologia:
   - SOFTWARE
+  - TECNOLOG
   - TECH
   - DIGITAL
-  - TI
-  - DATA
   - CLOUD
-  - SAP
   - TOTVS
+  - SINQIA
+  - INFORMATICA
+  - SISTEMAS
+  - LOCAWEB
+  - POSITIVO
+  - INTELBRAS
+  - SEMANTIX
   varejo:
   - LOJAS
   - VAREJ
@@ -44,15 +65,123 @@ setor_keywords:
   - VIA
   - CASAS BAHIA
   - MERCADO
+  - GRAZZIOTIN
+  - GUARARAPES
+  - RIACHUELO
+  - VIVARA
+  - PET CENTER
+  - PETZ
+  - ATACAD
+  - CARREFOUR
+  - ASSAI
   saude_educacao:
   - SAUDE
-  - SAÚDE
   - HOSP
   - FARMA
   - EDUC
   - UNIVERS
   - ODONT
   - DIAGNOST
+  - HAPVIDA
+  - REDE D'OR
+  - FLEURY
+  - DASA
+  - ONCOCLINICAS
+  - YDUQS
+  - COGNA
+  - ANIMA
+  - CRUZEIRO DO SUL
+  - SER EDUCACIONAL
+  - MATER DEI
+  - QUALICORP
+  utilities:
+  - ENERG
+  - ELETR
+  - SANEAMENTO
+  - SANEP
+  - TELECOM
+  - TIM
+  - VIVO
+  - TELEFONICA
+  - OI
+  - CEMIG
+  - COPEL
+  - SABESP
+  - TRANSMISS
+  - GERACAO
+  - DISTRIBUIDORA DE ENERGIA
+  - CPFL
+  - ENGIE
+  - EQUATORIAL
+  - NEOENERGIA
+  - ELETROBRAS
+  - TAESA
+  - ALUPAR
+  - LIGHT
+  - CLARO
+  - ALGAR
+  - COPASA
+  - CEG
+  - COMGAS
+  construcao:
+  - CONSTR
+  - INCORPOR
+  - MRV
+  - CYRELA
+  - TECNISA
+  - DIRECIONAL
+  - EZTEC
+  - EVEN
+  - TENDA
+  - HELBOR
+  - TRISUL
+  - MOURA DUBEUX
+  - PLANO & PLANO
+  - LAVVI
+  - MITRE
+  - CURY
+  - GAFISA
+  - JHSF
+  - MELNICK
+  - RNI
+  - REALTY
+  commodities:
+  - PETRO
+  - VALE
+  - MINER
+  - SIDER
+  - ACO
+  - AGRO
+  - SUCOS
+  - PAPEL
+  - CELULOSE
+  - OIL
+  - GAS
+  - CSN
+  - GERDAU
+  - SUZANO
+  - KLABIN
+  - USIMINAS
+  - BRASKEM
+  - ULTRAPAR
+  - COSAN
+  - RAIZEN
+  - SLC
+  - BRASILAGRO
+  - MARFRIG
+  - MINERVA
+  - JBS
+  - BRF
+  - AMBIPAR
+  - 3R
+  - PRIO
+  - ENAUTA
+  - VIBRA
+  - SAO MARTINHO
+  - JALLES
+  - IRANI
+  - DEXCO
+  - CBA
   industria:
   - INDUST
   - METAL
@@ -61,43 +190,36 @@ setor_keywords:
   - WEG
   - RANDON
   - TUPY
-  utilities:
-  - ENERGIA
-  - ELETR
-  - SANEAMENTO
-  - TELECOM
-  - TIM
-  - VIVO
-  - OI
-  - CEMIG
-  - COPEL
-  - SABESP
-  construcao:
-  - CONSTR
-  - INCORPOR
-  - MRV
-  - CYRELA
-  - TECNISA
-  - DIRECIONAL
-  commodities:
-  - PETRO
-  - VALE
-  - MINER
-  - SIDER
-  - ACO
-  - AÇO
-  - AGRO
-  - SUCOS
-  - PAPEL
-  - CELULOSE
-  - OIL
-  - GAS
-  - GÁS
-  - CSN
-  - GERDAU
-  - SUZANO
-  - KLABIN
+  - IOCHPE
+  - MARCOPOLO
+  - FRAS-LE
+  - KEPLER
+  - SCHULZ
+  - ROMI
+  - TAURUS
+  - METISA
+  - MAHLE
+  - WHIRLPOOL
+  - UNIPAR
+  - TEXTIL
+  - CONFEC
+  - CALCADO
+  - ALPARGATAS
+  - VULCABRAS
+  - GRENDENE
+  - PETTENATI
+  - CEDRO
 alpha_max: 0.6
+# α da PDD fora do setor financeiro (Pesos_Alpha_Beta §3): em não-financeiras a
+# PDD é pequena e pouco "automatizável"; bancos/financeiras usam alpha_base.pdd.
+# null → mesmo α para todos.
+alpha_pdd_nao_financeiro: 0.15
+# Pessoal (DVA 7.08.01) já está dentro de CPV + SG&A + Vendas.
+#   liquido  → retira de CPV/SG&A/Vendas (pro rata) a parcela de pessoal e aplica
+#              α_pessoal apenas sobre Pessoal (sem dupla contagem)   [padrão]
+#   separado → soma como linhas independentes (versão antiga; superestima ~25%)
+#   excluir  → ignora a linha Pessoal
+pessoal_modo: liquido
 f_caixa:
 - max_exclusive: 0.03
   valor: 0.75
@@ -113,6 +235,17 @@ g_alavancagem:
 - max_exclusive: null
   valor: 0.4
 g_ebitda_negativo: 0.25
+# Instituições financeiras: DL/EBITDA não é uma métrica definida (captação via
+# depósitos, sem EBITDA); g fixo, só f(caixa/ativo) diferencia.
+g_financeiro: 1.0
+# h(FCO/ROL): geração de caixa operacional (DFC 6.01). Empresa que queima caixa
+# tem menos folga para investir em IA mesmo com caixa em balanço. Sem DFC → 1,0.
+usar_fco: true
+h_fco:
+- max_exclusive: 0.0
+  valor: 0.85
+- max_exclusive: null
+  valor: 1.0
 min_receita: 50000000.0
 max_linha_sobre_receita: 3.0
 excluir_recuperacao_judicial: true
@@ -121,10 +254,36 @@ exigir_ao_menos_uma_de:
 - vendas
 - pessoal
 usar_consolidado: true
+# companhias sem consolidado (sem controladas) entram pela demonstração individual
+fallback_individual: true
+# Subsidiárias/SPEs: entram pela individual E são "Categoria B" na CVM (não podem
+# ter ações em bolsa) — malhas da Rumo, concessionárias etc. Ficam fora do painel
+# para não contar controlada + holding.
+excluir_individual_categoria_b: true
+# Universo estrito de emissoras de ações (Categoria A). Desligado: mantém
+# companhias só com dívida listada (Categoria B com consolidado).
+apenas_categoria_a: false
+# Excluir empresas com DRE inconsistente com a DVA (alerta_receita). Desligado:
+# só sinaliza; a winsorização já limita o efeito no score.
+excluir_alerta_receita: false
+# Setor: SETOR_ATIV do cadastro CVM (config/setor_cvm.yaml) antes da heurística por nome
+usar_setor_cvm: true
 normalizar_score_0_100: true
+# Exposição usada no score relativo é truncada neste percentil do painel válido
+# (o teto em R$ não muda). null → sem winsorização.
+winsor_exposicao_pct: 0.99
+# minmax (padrão) | percentil
+normalizacao_score: minmax
 rho_captura: 0.7
 phi_execucao_base: 0.85
 lambda_ready: 0.1
 w_software: 0.5
 w_intangivel: 0.2
 w_ped: 0.3
+# Readiness: razões Soft/Ativo e Intang/Ativo são < 0,05 na maioria das empresas,
+# então clip(r,0,1) deixa o Bloco C inerte. Modos:
+#   percentil → posição relativa no painel válido (0–1)   [padrão]
+#   escala    → r / quantil de referência, clip 0–1
+#   bruto     → clip(r, 0, 1)
+readiness_modo: percentil
+readiness_quantil_ref: 0.9

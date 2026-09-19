@@ -265,7 +265,7 @@ div[data-testid="stPopover"] button svg {
                 f"No setor **{setor}**, ocupa a **{pos_setor}ª** posição "
                 f"entre {n_setor} empresas."
                 if pos_setor is not None and n_setor > 0
-                else f"Setor classificado (heurística v1): **{setor}**."
+                else f"Setor classificado: **{setor}**."
             )
             with st.popover(f"{rank_i}º de {n_painel}"):
                 st.markdown(
@@ -283,10 +283,31 @@ A ordenação usa o score 0–100 (1º = melhor).
                 )
     else:
         st.markdown(f"### {escolhida}")
+    template = str(row.get("template", "padrao")) if "template" in row.index else "padrao"
+    fonte_map = {"cvm": "cadastro CVM", "nome": "heurística por nome", "template": "plano de contas", "padrao": "sem regra → outros"}
+    setor_fonte = str(row.get("setor_fonte", "")) if "setor_fonte" in row.index else ""
+    setor_cvm = row.get("setor_cvm") if "setor_cvm" in row.index else None
+    extras = []
+    if setor_fonte in fonte_map:
+        extras.append(f"fonte do setor: {fonte_map[setor_fonte]}")
+    if isinstance(setor_cvm, str) and setor_cvm.strip() and setor_cvm.lower() != "nan":
+        extras.append(f"SETOR_ATIV CVM: {setor_cvm}")
+    for k, lbl in [("categoria_cvm", ""), ("mercado_cvm", ""), ("origem_dfp", "DFP")]:
+        v = row.get(k) if k in row.index else None
+        if isinstance(v, str) and v.strip() and v.lower() != "nan":
+            extras.append(f"{lbl + ' ' if lbl else ''}{v}")
     st.markdown(
-        f"Setor (heurística v1): **{setor}** · DFP **{year}** · "
+        f"Setor: **{setor}** · DFP **{year}** · "
         f"CD_CVM: `{row.get('CD_CVM', '—')}` · Receita: **{fmt_money(row.get('receita'))}**"
+        + (" · Plano de contas: **instituição financeira**" if template == "financeiro" else "")
     )
+    if extras:
+        st.caption(" · ".join(extras))
+    if "alerta_receita" in row.index and str(row.get("alerta_receita")).lower() in {"true", "1"}:
+        st.warning(
+            "Receita da DRE muito abaixo das receitas da DVA (7.01) — a DFP desta companhia "
+            "pode estar inconsistente; os percentuais sobre a receita devem ser lidos com cautela."
+        )
 
     # -------- 3 OBJETIVOS (bloco principal) --------
     teto_rs = safe(row, "obj1_teto_rs")
@@ -323,7 +344,9 @@ A ordenação usa o score 0–100 (1º = melhor).
             "pct": safe(row, "obj2_viavel_pct_receita"),
             "pct_label": "ganho viável estimado",
             "ajuste": (
-                f"F = {fmt_num(100 * f_fin, 0)}/100 · ρ = {fmt_num(100 * rho, 0)}% · "
+                f"F = {fmt_num(100 * f_fin, 0)}/100 "
+                f"(f {fmt_num(safe(row, 'f_caixa', 1.0), 2)} · g {fmt_num(safe(row, 'g_alavancagem', 1.0), 2)} · "
+                f"h {fmt_num(safe(row, 'h_fco', 1.0), 2)}) · ρ = {fmt_num(100 * rho, 0)}% · "
                 f"desconto total vs teto: {fmt_money(desconto_tot)} "
                 f"(financeiro {fmt_money(desconto_fin)} + captura {fmt_money(desconto_cap)})"
             ),
@@ -443,6 +466,13 @@ A ordenação usa o score 0–100 (1º = melhor).
             }
         )
         st.dataframe(detalhe, hide_index=True, use_container_width=True)
+    fpl = row.get("fator_pessoal_liquido") if "fator_pessoal_liquido" in row.index else None
+    if fpl is not None and pd.notna(fpl) and float(fpl) < 0.999:
+        st.caption(
+            f"Pessoal (DVA) = {fmt_pct(100 * (1 - float(fpl)))} de CPV + SG&A + vendas. Essa parcela foi "
+            f"retirada dessas três linhas (fator {fmt_num(float(fpl), 2)}) e entra só na linha Pessoal — "
+            "sem dupla contagem."
+        )
 
     # Comparativo
     st.markdown("#### Comparativo")
@@ -493,6 +523,7 @@ A ordenação usa o score 0–100 (1º = melhor).
             ("Caixa", "caixa", False),
             ("Dívida líquida", "divida_liquida", False),
             ("EBITDA (proxy)", "ebitda", False),
+            ("FCO (DFC 6.01)", "fco", False),
             ("Ativo total", "ativo_total", False),
         ]
         rows_tab = []
@@ -505,11 +536,13 @@ A ordenação usa o score 0–100 (1º = melhor).
                 rows_tab.append({"Linha": label, "Valor": fmt_money(val), "% da receita": pct})
         st.dataframe(pd.DataFrame(rows_tab), hide_index=True, use_container_width=True)
 
-        v1, v2, v3 = st.columns(3)
+        v1, v2, v3, v4 = st.columns(4)
         v1.metric("Caixa / Ativo", fmt_pct(100 * safe(row, "caixa_sobre_ativo")))
         dl = row["dl_sobre_ebitda"] if "dl_sobre_ebitda" in row.index else float("nan")
         v2.metric("DL / EBITDA", fmt_num(dl, 2) if pd.notna(dl) else "—")
-        v3.metric("Multiplicador setorial", fmt_num(row.get("mult_setor", 1), 2))
+        fr = row["fco_sobre_receita"] if "fco_sobre_receita" in row.index else float("nan")
+        v3.metric("FCO / Receita", fmt_pct(100 * float(fr)) if pd.notna(fr) else "—")
+        v4.metric("Multiplicador setorial", fmt_num(row.get("mult_setor", 1), 2))
 
     st.markdown(f"#### Pares do setor ({setor})")
     peer_cols = [
@@ -555,7 +588,8 @@ def pagina_ranking(df: pd.DataFrame, year: int) -> None:
     with f2:
         busca = st.text_input("Buscar empresa", placeholder="Ex.: TOTVS...")
     with f3:
-        top_n = st.slider("Top N", 10, min(300, len(df)), 50)
+        n_max = max(10, min(300, len(df)))
+        top_n = st.slider("Top N", 10, n_max, min(50, n_max))
 
     view = df.copy()
     if setor != "Todos":
@@ -683,8 +717,8 @@ o score 0–100 destina-se à comparação relativa no mesmo ano.
 | Etapa | Módulo | Ação |
 |---|---|---|
 | 1. Download | `cvm_download.py` | Baixa o ZIP anual da DFP no portal de dados abertos da CVM |
-| 2. Carga | `cvm_load.py` | Lê DRE, BPA, BPP e DVA consolidados |
-| 3. Extração | `extract.py` | Mapeia contas (`CD_CONTA` / `DS_CONTA`) → variáveis em **R$** (converte ESCALA MIL→×1000) |
+| 2. Carga | `cvm_load.py` | Lê DRE, BPA, BPP e DVA consolidados; companhias sem consolidado entram pela individual |
+| 3. Extração | `extract.py` | Mapeia contas (`CD_CONTA` / `DS_CONTA`) → variáveis em **R$** (converte ESCALA MIL→×1000); plano de contas de bancos tratado à parte |
 | 4. Score | `scoring.py` | Funil: teto → F → ρ → viável → readiness/φ → final → score 0–100 |
 | 5. Saída | `pipeline.py` + `app.py` | Gera CSVs em `output/` e esta interface |
 
@@ -703,55 +737,73 @@ streamlit run app.py
     st.markdown("### 3. Fórmulas")
     st.markdown("#### 3.1 Valor em R$ (o que o painel destaca)")
 
-    st.latex(r"Teto_i = \sum_k \min(|L_{i,k}|,\, 3\cdot ROL_i)\times \alpha_{k,s(i)}")
+    st.latex(r"Teto_i = \sum_k \min(|\tilde L_{i,k}|,\, 3\cdot ROL_i)\times \alpha_{k,s(i)}")
     st.markdown(
-        "O **teto** é o ganho máximo teórico da empresa \(i\): soma, sobre as linhas "
-        "de custo afetáveis \(L_{i,k}\) (SG&A, vendas, pessoal, CPV, PDD, estoques etc.), "
-        "o valor absoluto limitado a 3× a receita operacional líquida (\(ROL_i\)), "
-        "multiplicado pelo fator de afetabilidade \(\\alpha_{k,s(i)}\) da linha \(k\) "
+        "O **teto** é o ganho máximo teórico da empresa $i$: soma, sobre as linhas "
+        "de custo afetáveis $\\tilde L_{i,k}$ (SG&A, vendas, pessoal, CPV, PDD, estoques), "
+        "o valor absoluto limitado a 3× a receita operacional líquida ($ROL_i$), "
+        "multiplicado pelo fator de afetabilidade $\\alpha_{k,s(i)}$ da linha $k$ "
         "no setor da empresa. O teto mede espaço econômico bruto — ainda sem capacidade "
         "financeira nem execução."
     )
-
-    st.latex(r"F^{fin}_i = f\!\left(\frac{Caixa_i}{Ativo_i}\right) \times g\!\left(\frac{DL_i}{EBITDA_i}\right)")
+    st.latex(
+        r"\tilde L_{i,k} = L_{i,k}\times\left(1 - \frac{Pessoal_i}{CPV_i + SGA_i + Vendas_i}\right)"
+        r"\quad k \in \{CPV, SGA, Vendas\}"
+    )
     st.markdown(
-        "A **viabilidade financeira** \(F^{fin}_i\) combina liquidez (\(f\): caixa sobre ativo) "
-        "e alavancagem (\(g\): dívida líquida sobre EBITDA). Valores próximos de 1 indicam "
-        "condição financeira favorável à realização do potencial; valores menores "
-        "comprimem o teto na etapa seguinte. As faixas de \(f\) e \(g\) estão na seção 3.4."
+        "**Sem dupla contagem de pessoal.** A linha *Pessoal* (DVA 7.08.01) já está embutida em "
+        "CPV, SG&A e despesas com vendas. No modo padrão (`pessoal_modo: liquido`) a folha é "
+        "retirada *pro rata* dessas três linhas e recebe seu próprio $\\alpha_{pessoal}$; "
+        "as demais linhas ficam só com a parcela não-salarial. Em bancos “Despesas de Pessoal” "
+        "já é linha separada e nada é subtraído. Os modos `separado` (versão antiga, superestimava "
+        "o teto em ~25%) e `excluir` continuam disponíveis."
+    )
+
+    st.latex(
+        r"F^{fin}_i = f\!\left(\frac{Caixa_i}{Ativo_i}\right) \times g\!\left(\frac{DL_i}{EBITDA_i}\right)"
+        r" \times h\!\left(\frac{FCO_i}{ROL_i}\right)"
+    )
+    st.markdown(
+        "A **viabilidade financeira** $F^{fin}_i$ combina liquidez ($f$: caixa sobre ativo), "
+        "alavancagem ($g$: dívida líquida sobre EBITDA) e **geração de caixa operacional** "
+        "($h$: FCO da DFC, conta 6.01, sobre a receita — empresa que queima caixa tem menos "
+        "folga para investir em IA mesmo com caixa em balanço). Valores próximos de 1 indicam "
+        "condição financeira favorável; valores menores comprimem o teto na etapa seguinte. "
+        "As faixas de $f$, $g$ e $h$ estão na seção 3.4."
     )
 
     st.latex(r"Viavel_i = Teto_i \times F^{fin}_i \times \rho")
     st.markdown(
         "O **potencial viável** aplica ao teto a capacidade financeira e a **taxa de captura** "
-        "\(\\rho\) (cenário-base 0,70): reconhece que nem todo ganho teórico se materializa, "
+        "$\\rho$ (cenário-base 0,70): reconhece que nem todo ganho teórico se materializa, "
         "mesmo com caixa e endividamento adequados. É o segundo número do funil no painel."
     )
 
     st.latex(
-        r"R_i = \mathrm{clip}_{[0,1]}\!\left("
-        r"w_{soft}\cdot\frac{Soft_i}{Ativo_i}"
+        r"r_i = w_{soft}\cdot\frac{Soft_i}{Ativo_i}"
         r" + w_{intang}\cdot\frac{Intang_i}{Ativo_i}"
-        r"\right)"
+        r"\qquad R_i = \mathrm{percentil}_{painel}(r_i) \in [0,1]"
     )
     st.markdown(
-        "O **readiness** \(R_i\) resume a predisposição digital implícita no balanço "
-        "(software e intangíveis sobre o ativo total), com pesos \(w_{soft}\) e \(w_{intang}\). "
-        "O resultado é limitado ao intervalo [0, 1]: não aumenta o teto; só informa a "
-        "etapa de execução."
+        "O **readiness** $R_i$ resume a predisposição digital implícita no balanço "
+        "(software e intangíveis sobre o ativo total), com pesos $w_{soft}$ e $w_{intang}$. "
+        "Como essas razões ficam abaixo de 0,05 na quase totalidade das empresas, um simples "
+        "`clip(r, 0, 1)` deixaria o Bloco C inerte; por isso $R_i$ é a **posição relativa** "
+        "de $r_i$ entre as empresas válidas do ano (`readiness_modo: percentil`; alternativas "
+        "`escala` = $r/q_{90}$ e `bruto`). R não aumenta o teto; só informa a etapa de execução."
     )
 
     st.latex(r"R^{eff}_i = \mathrm{clip}_{[0,1]}(R_i\cdot(1+\lambda))")
     st.markdown(
-        "A **readiness efetiva** amplifica levemente \(R_i\) pelo fator \((1+\\lambda)\) "
-        "(cenário-base \(\\lambda = 0{,}10\)) e volta a clipar em [0, 1], evitando que "
+        "A **readiness efetiva** amplifica levemente $R_i$ pelo fator $(1+\\lambda)$ "
+        "(cenário-base $\\lambda = 0{,}10$) e volta a clipar em [0, 1], evitando que "
         "o ajuste ultrapasse o teto de 100% na execução."
     )
 
     st.latex(r"Final_i = Viavel_i \times \big(\phi + (1-\phi)\, R^{eff}_i\big)")
     st.markdown(
         "O **potencial final** é o resultado principal em R$: parte do viável e aplica o "
-        "**fator de execução** \(\\phi + (1-\\phi) R^{eff}_i\). Com \(\\phi = 0{,}85\), "
+        "**fator de execução** $\\phi + (1-\\phi) R^{eff}_i$. Com $\\phi = 0{,}85$, "
         "mesmo readiness nulo preserva 85% do viável; readiness alto aproxima o final "
         "de 100% do viável. Ordem no código: teto → F → viável (ρ) → R → final (φ)."
     )
@@ -769,32 +821,48 @@ streamlit run app.py
 
     st.markdown("#### 3.2 Score relativo (ranking)")
     st.latex(
-        r"Score_i = Expo_i \times F^{fin}_i \times \rho"
+        r"Score_i = \min(Expo_i,\, q_{99}) \times F^{fin}_i \times \rho"
         r" \times \big(\phi + (1-\phi)\, R^{eff}_i\big)"
     )
     st.markdown(
         "O **score bruto** replica o funil em razão da receita: "
-        "\(Expo_i = Teto_i / ROL_i\), em seguida os mesmos fatores \(F^{fin}\), \(\\rho\) "
-        "e execução. Serve à **comparação relativa** entre empresas (não substitui o "
-        "potencial final em R$). O **rank** ordena pelo `score_0_100` normalizado."
+        "$Expo_i = Teto_i / ROL_i$, em seguida os mesmos fatores $F^{fin}$, $\\rho$ "
+        "e execução. A exposição é **winsorizada** no percentil 99 do painel válido "
+        "(`winsor_exposicao_pct`) para que uma DFP atípica não comprima a escala de todas as "
+        "outras; o teto em R$ não é alterado. Serve à **comparação relativa** entre empresas "
+        "(não substitui o potencial final em R$). O **rank** ordena pelo `score_0_100`."
     )
 
     st.markdown("#### 3.3 Ajuste setorial do α")
     st.latex(r"\alpha_{k,s} = \min\left(\alpha^{base}_k \times \frac{E_s}{\bar E},\; 0{,}60\right)")
     st.markdown(
-        "O \(\\alpha\) da linha \(k\) no setor \(s\) parte do \(\\alpha^{base}_k\) e é "
-        "escalado pelo prior setorial \(E_s/\\bar E\) (exposição relativa à média), "
+        "O $\\alpha$ da linha $k$ no setor $s$ parte do $\\alpha^{base}_k$ e é "
+        "escalado pelo prior setorial $E_s/\\bar E$ (exposição relativa à média), "
         "com teto de 0,60. Assim, setores com maior exposição ocupacional a IA elevam "
-        "a afetabilidade das mesmas linhas contábeis. Na v1, \(E_s/\\bar E\) são "
-        "priors (tabela na seção 5)."
+        "a afetabilidade das mesmas linhas contábeis. Na v1, $E_s/\\bar E$ são "
+        "priors (tabela na seção 5). **Exceção — PDD:** fora do setor financeiro a provisão "
+        "para créditos é pequena e pouco automatizável; o $\\alpha^{base}$ da PDD cai de "
+        "0,40 para **0,15** (`alpha_pdd_nao_financeiro`), como sugere o documento de pesos."
     )
 
     st.markdown("#### 3.4 Viabilidade financeira (detalhe de F)")
-    st.markdown("Já usada na etapa do viável. Faixas de \(f\) e \(g\):")
+    st.markdown("Já usada na etapa do viável. Faixas de $f$, $g$ e $h$:")
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
+    with c3:
+        st.markdown("**Função $h$ — geração de caixa**")
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "FCO / ROL": ["< 0 (queima caixa)", "≥ 0", "Sem DFC / inst. financeira"],
+                    "h": ["0,85", "1,00", "1,00"],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
     with c1:
-        st.markdown("**Função \(f\) — caixa/ativo**")
+        st.markdown("**Função $f$ — caixa/ativo**")
         st.dataframe(
             pd.DataFrame(
                 {
@@ -806,22 +874,29 @@ streamlit run app.py
             use_container_width=True,
         )
     with c2:
-        st.markdown("**Função \(g\) — alavancagem**")
+        st.markdown("**Função $g$ — alavancagem**")
         st.dataframe(
             pd.DataFrame(
                 {
-                    "DL / EBITDA": ["≤ 2,0×", "2,0× < x ≤ 3,5×", "> 3,5×", "EBITDA ≤ 0"],
-                    "g": ["1,00", "0,70", "0,40", "0,25"],
+                    "DL / EBITDA": ["< 2,0×", "2,0× ≤ x < 3,5×", "≥ 3,5×", "EBITDA ≤ 0", "Inst. financeira"],
+                    "g": ["1,00", "0,70", "0,40", "0,25", "1,00 (fixo)"],
                 }
             ),
             hide_index=True,
             use_container_width=True,
         )
+    st.caption(
+        "Para bancos e seguradoras (plano de contas com “Receitas da Intermediação Financeira”) "
+        "DL/EBITDA não é definido — a captação é por depósitos e não há EBITDA — e o FCO oscila "
+        "com a carteira de crédito. Usa-se g fixo (`g_financeiro`), h = 1 e apenas f(Caixa/Ativo) diferencia."
+    )
 
     st.markdown("#### 3.5 Readiness e execução")
     st.markdown(
         "O Bloco C não *aumenta* o teto: ele define quanto do **viável** se realiza. "
         "Com φ = 0,85 e R ≈ 0, o final fica em 85% do viável; com R alto, aproxima-se de 100% do viável. "
+        "Como R é percentil no painel, o fator de execução se distribui de fato entre 0,85 e 1,0 "
+        "(antes, com clip da razão bruta, ficava ≈ 0,85 para quase todas). "
         "P&D (`w_ped`) está reservado na calibração e **ainda não entra** no cálculo da v0.1."
     )
 
@@ -833,7 +908,9 @@ streamlit run app.py
     st.markdown(
         "A escala **0–100** é uma normalização min–max do score bruto **somente entre "
         "empresas válidas do mesmo ano**: o pior score do painel vira 0 e o melhor, 100. "
-        "Não é percentil. Os índices auxiliares `obj1_0_100`, `obj2_0_100` e `obj3_0_100` "
+        "Não é percentil (há a opção `normalizacao_score: percentil` na Config). Como a exposição "
+        "que entra no score é winsorizada (3.2), o topo da escala corresponde ao percentil 99 de "
+        "exposição, não ao outlier. Os índices auxiliares `obj1_0_100`, `obj2_0_100` e `obj3_0_100` "
         "são percentis do valor em R$ (uso interno); a ficha destaca R$ e % da receita."
     )
 
@@ -844,22 +921,22 @@ streamlit run app.py
         pd.DataFrame(
             {
                 "Variável": ["SG&A", "Vendas", "Pessoal", "CPV", "PDD", "Estoques"],
-                "Fonte CVM": ["DRE", "DRE", "DVA", "DRE", "DRE (padrão)", "BPA"],
+                "Fonte CVM": ["DRE", "DRE", "DVA", "DRE", "DRE (texto) → DVA 7.01.04", "BPA"],
                 "Código / busca típica": [
                     "3.04.02 · gerais e administrativas",
                     "3.04.01 · despesas com vendas",
-                    "DVA · Pessoal / remuneração",
+                    "DVA 7.08.01 · Pessoal",
                     "3.02 · custo dos bens/serviços",
-                    "provisão / PeLD / crédito (texto)",
+                    "provisão / PeLD / crédito (texto); fallback DVA 7.01.04",
                     "1.01.04 · Estoques",
                 ],
-                "α base": ["0,30", "0,32", "0,35", "0,10", "0,40", "0,18"],
+                "α base": ["0,30", "0,32", "0,35", "0,10", "0,40 fin. / 0,15 demais", "0,18"],
                 "Por quê entra": [
-                    "Colarinho branco / GenAI / RPA",
-                    "Atendimento, churn, precificação",
-                    "Proxy de automação de produtividade",
-                    "Manutenção preditiva / eficiência (α baixo: commodity)",
-                    "ML de crédito/fraude (forte em financeiro)",
+                    "Colarinho branco / GenAI / RPA (parcela não-salarial)",
+                    "Atendimento, churn, precificação (parcela não-salarial)",
+                    "Folha total — recebe seu próprio α (retirada das outras linhas)",
+                    "Manutenção preditiva / eficiência (parcela não-salarial; α baixo)",
+                    "ML de crédito/fraude (forte em financeiro; residual fora dele)",
                     "Forecast de demanda → PME ↓",
                 ],
             }
@@ -872,12 +949,20 @@ streamlit run app.py
     st.dataframe(
         pd.DataFrame(
             {
-                "Variável": ["Caixa", "Dívida", "EBITDA (proxy)", "Ativo total", "Receita"],
-                "Fonte": ["BPA 1.01.01", "BPP (empréstimos/financiamentos)", "DRE 3.05 + depreciação", "BPA 1", "DRE 3.01"],
+                "Variável": ["Caixa", "Dívida", "EBITDA (proxy)", "FCO", "Ativo total", "Receita"],
+                "Fonte": [
+                    "BPA 1.01.01",
+                    "BPP 2.01.04 + 2.02.01 (sem contar subcontas)",
+                    "DRE 3.05 + DVA 7.04.01",
+                    "DFC 6.01 (método indireto ou direto)",
+                    "BPA 1",
+                    "DRE 3.01",
+                ],
                 "Uso": [
                     "f(Caixa/Ativo)",
                     "DL = Dívida − Caixa",
                     "g(DL/EBITDA)",
+                    "h(FCO/ROL) — penaliza queima de caixa",
                     "Denominadores e readiness",
                     "Normalização L/ROL",
                 ],
@@ -892,7 +977,7 @@ streamlit run app.py
         pd.DataFrame(
             {
                 "Variável": ["Software", "Intangível"],
-                "Fonte": ["BPA / notas (padrão de texto)", "BPA 1.02.02"],
+                "Fonte": ["BPA / notas (padrão de texto)", "BPA 1.02.04"],
                 "Papel": [
                     "Proxy de base digital instalada",
                     "Intensidade tecnológica (peso menor; mais ruidoso)",
@@ -907,7 +992,7 @@ streamlit run app.py
     st.dataframe(
         pd.DataFrame(
             {
-                "Setor (heurística por nome)": [
+                "Setor": [
                     "financeiro",
                     "tecnologia",
                     "varejo",
@@ -924,19 +1009,34 @@ streamlit run app.py
         hide_index=True,
         use_container_width=True,
     )
-    st.caption(
-        "A classificação setorial da v1 é heurística (palavras no nome da empresa). "
-        "Versões futuras devem usar CNAE oficial."
+    st.markdown(
+        """
+**Como o setor é atribuído** (coluna `setor_fonte`):
+
+1. **`cvm`** — campo oficial `SETOR_ATIV` do cadastro de companhias abertas da CVM
+   (`cad_cia_aberta.csv`), mapeado para os grupos acima em `config/setor_cvm.yaml`
+   (ex.: “Bancos” → financeiro; “Comunicação e Informática” → tecnologia; “Emp. Adm. Part. – Energia Elétrica” → utilities).
+2. **`nome`** — quando o setor CVM não tem regra (ex.: “Serviços Transporte e Logística”, “Sem Setor Principal”),
+   vale a heurística por palavras-chave no nome (`setor_keywords`).
+3. **`padrao`** — sem batida em nenhum dos dois → `outros` (multiplicador 1,0).
+4. **`template`** — plano de contas de instituição financeira sempre força `financeiro`.
+"""
     )
 
     st.markdown("### 6. Filtros de qualidade (quem entra no ranking)")
     st.markdown(
         """
-- Receita mínima ≥ **R$ 50 milhões** (na escala da DFP, tipicamente em milhares → limiar `50000`)  
+- Receita mínima ≥ **R$ 50 milhões** (`min_receita`, já em R$ — a extração converte a escala MIL da DFP)  
 - Exclui empresas com “**RECUPERA**” no nome (recuperação judicial)  
 - Exige ao menos uma entre: **SG&A, vendas ou pessoal**  
-- Cada razão \(L/ROL\) é limitada a **3,0**  
-- Usa demonstrações **consolidadas**  
+- Cada razão $L/ROL$ é limitada a **3,0**  
+- Usa demonstrações **consolidadas**; companhias sem consolidado entram pela **individual** (`origem_dfp`)  
+- **Subsidiárias / SPEs ficam fora**: quem entra pela individual **e** é *Categoria B* no cadastro CVM
+  (não pode ter ações em bolsa — malhas ferroviárias, distribuidoras de holdings listadas, concessionárias)
+  é excluído para não contar controlada e holding (`excluir_individual_categoria_b`).
+  Opcionalmente `apenas_categoria_a` restringe às emissoras de ações.  
+- Coluna `alerta_receita`: receita da DRE < 50% das receitas da DVA (7.01) → DFP possivelmente inconsistente
+  (só sinaliza; bancos não entram no alerta porque a diferença é estrutural; `excluir_alerta_receita` torna filtro)  
 """
     )
 
@@ -1003,25 +1103,28 @@ com composição atípica de DRE/DVA ou sem depreciação bem identificada.
 """,
         ),
         (
-            "3. Setor é heurístico por nome, não CNAE",
+            "3. Setor vem do cadastro CVM, com grupos amplos",
             """
-A classificação setorial (financeiro, tecnologia, commodities…) usa **palavras no nome** da empresa
-(`setor_keywords` em `pesos.yaml`), não o **CNAE** oficial nem a classificação setorial da B3.
+A classificação setorial usa o campo oficial **`SETOR_ATIV`** do cadastro de companhias abertas da CVM
+(mapeado em `config/setor_cvm.yaml`); a heurística por **nome** (`setor_keywords`) só cobre quem não
+tem regra. Companhias com plano de contas de instituição financeira são sempre **financeiro**.
 
-**Efeito:** o multiplicador \(E_s/\\bar E\) pode ser aplicado ao setor “errado”
-(ex.: holding com nome genérico cai em “outros”), distorcendo α efetivo e médias setoriais.
+**Efeito:** os 8 grupos do índice são mais amplos que o setor CVM — “Serviços Transporte e Logística”,
+“Hospedagem e Turismo” e holdings “Sem Setor Principal” caem em **outros** (multiplicador 1,0), e a
+escolha de para onde vai cada setor CVM (ex.: Alimentos → indústria, Siderurgia → commodities) é uma
+decisão metodológica editável. O cadastro é baixado uma vez por mês; offline, vale a heurística.
 """,
         ),
         (
             "4. PDD depende de texto da conta",
             """
-Provisão para créditos / PeLD / PDD **não** tem um `CD_CONTA` estável em todas as companhias.
+Provisão para créditos / PeLD / PDD **não** tem um `CD_CONTA` estável na DRE de todas as companhias.
 
-A extração busca por **padrões de texto** em `DS_CONTA`. Cobertura e qualidade variam muito
-entre bancos, varejo e indústria.
+A extração busca por **padrões de texto** em `DS_CONTA` da DRE e, quando não encontra, usa a linha
+fixa da DVA **7.01.04 — Provisão/Reversão de Créditos de Liquidação Duvidosa** (coluna `pdd_fonte`).
 
-**Efeito:** empresas sem rótulo claro de PDD ficam com PDD ≈ 0 no índice, mesmo tendo risco de crédito
-relevante — o teto fica subestimado nesses casos.
+**Efeito:** a cobertura passa a ser quase universal, mas a linha da DVA é o **movimento líquido**
+(constituição − reversão) do exercício e pode ser zero ou pequena em empresas sem carteira de crédito.
 """,
         ),
         (
@@ -1037,13 +1140,34 @@ metodológico), não de uma estimação econométrica firm-level na B3.
         (
             "6. Score 0–100 é relativo ao painel do ano",
             """
-O `score_0_100` é uma normalização **min–max entre empresas válidas do mesmo ano**.
+O `score_0_100` é uma normalização **min–max entre empresas válidas do mesmo ano**, calculada sobre
+a exposição **winsorizada** no percentil 99 (o outlier ainda fica em 100, mas não comprime os demais).
 
 **Efeito:**
 - score 100 = melhor do **painel daquele ano**, não “100% de potencial absoluto”
 - **não** se compara score 2024 com score 2025 sem reprocessar / alinhar painéis
 - o potencial em **R$** e o **% da receita** são as métricas comparáveis em nível de empresa;
   o 0–100 serve sobretudo ao **ranking relativo**
+""",
+        ),
+        (
+            "7. Readiness é posição relativa, não nível absoluto",
+            """
+Software e intangível sobre o ativo ficam abaixo de 5% na quase totalidade das companhias, e software
+capitalizado só é identificável em ~10% delas. Por isso **R** é o **percentil** da razão composta no painel.
+
+**Efeito:** R = 0,9 significa “entre as 10% mais intensivas em ativos digitais do painel”, não “90% pronta
+para IA”. Intangível inclui **goodwill** de aquisições, o que favorece empresas que cresceram por M&A.
+""",
+        ),
+        (
+            "8. Pessoal líquido é aproximação pro rata",
+            """
+A folha (DVA 7.08.01) é retirada de CPV, SG&A e vendas **na mesma proporção**, porque a DFP não informa
+quanto de pessoal está em cada linha.
+
+**Efeito:** em empresas com folha concentrada no CPV (indústria) ou no SG&A (serviços) a divisão entre
+linhas fica imprecisa, embora o **total** afetável seja correto (sem dupla contagem).
 """,
         ),
     ]
@@ -1084,15 +1208,15 @@ Isso evita misturar escalas absolutas entre anos sem reprocessar o painel comple
 """,
         ),
         (
-            "3. CNAE oficial",
+            "3. Setores mais finos (B3 / CNAE)",
             """
-O setor atual é **heurístico**: a classificação usa palavras no nome da empresa
-(ex.: “BANCO”, “SOFTWARE”, “PETRO”).
+O setor já vem do cadastro **CVM** (`SETOR_ATIV`), mas é agregado em 8 grupos.
 
-O próximo passo é usar o **CNAE real** (ou a classificação setorial oficial da B3/CVM), para que:
-- o multiplicador setorial \(E_s/\\bar E\) fique correto
-- as médias por setor sejam reproduzíveis e defensáveis academicamente
-- deixe de haver erro de classificação por nome genérico ou razão social ambígua
+Próximos refinamentos:
+- grupos próprios para **transporte/logística** e **serviços**, hoje em “outros”
+- classificação setorial da **B3** (setor/subsetor/segmento) ou **CNAE** para separar, por exemplo,
+  siderurgia de autopeças dentro de “Metalurgia e Siderurgia”
+- calibrar $E_s/\\bar E$ com o AIIE de Felten por setor fino
 """,
         ),
         (
@@ -1105,7 +1229,7 @@ Protocolo da dissertação para mostrar que o ranking **não depende de um únic
 | **R1** | α ±20% (sobe e desce todos os pesos) |
 | **R2** | pesos iguais (α = 0,25 para todas as linhas) |
 | **R3** | só núcleo cognitivo (pessoal + SG&A + vendas) |
-| **R4** | sem readiness (λ = 0) |
+| **R4** | sem readiness (φ = 1 — com φ = 1 o fator de execução vale 1 para todos; λ = 0 sozinho **não** desliga o Bloco C nesta versão) |
 | **R5** | sem multiplicador setorial |
 | **R6** | só alavancagem (ignora o fator de caixa) |
 
@@ -1210,8 +1334,17 @@ pela literatura de referência.
         ),
         (
             "F / F^fin — capacidade financeira",
-            "F = f(Caixa/Ativo) × g(DL/EBITDA). Penaliza empresas sem liquidez ou muito alavancadas. "
-            "F = 1,0 (100/100) = sem desconto financeiro.",
+            "F = f(Caixa/Ativo) × g(DL/EBITDA) × h(FCO/ROL). Penaliza empresas sem liquidez, muito "
+            "alavancadas ou que queimam caixa. F = 1,0 (100/100) = sem desconto financeiro.",
+        ),
+        (
+            "h (FCO/ROL)",
+            "Componente de F pela geração de caixa operacional (DFC 6.01): FCO < 0 → 0,85; ≥ 0 → 1,00. "
+            "Sem DFC ou instituição financeira → 1,00.",
+        ),
+        (
+            "FCO",
+            "Caixa líquido das atividades operacionais — DFC conta 6.01 (método indireto ou direto).",
         ),
         (
             "f (caixa/ativo)",
@@ -1219,13 +1352,20 @@ pela literatura de referência.
         ),
         (
             "g (alavancagem)",
-            "Componente de F pela dívida: DL/EBITDA ≤2× → 1,00; até 3,5× → 0,70; acima → 0,40; "
-            "EBITDA ≤ 0 → 0,25.",
+            "Componente de F pela dívida: DL/EBITDA <2× → 1,00; 2× a 3,5× → 0,70; ≥3,5× → 0,40; "
+            "EBITDA ≤ 0 → 0,25. Instituições financeiras: g fixo (`g_financeiro`).",
         ),
         (
             "R / Readiness",
             "Proxy de capacidade digital no balanço: combinação de Software/Ativo e Intangível/Ativo "
-            "(pesos w_soft e w_intang). Clipado em [0, 1].",
+            "(pesos w_soft e w_intang), expressa como **percentil** no painel válido do ano (0–1). "
+            "Modos alternativos: `escala` (r / q90) e `bruto` (clip).",
+        ),
+        (
+            "Pessoal líquido (pessoal_modo)",
+            "A folha (DVA 7.08.01) já está dentro de CPV, SG&A e vendas. No modo `liquido` ela é retirada "
+            "pro rata dessas linhas e recebe seu próprio α; `separado` soma tudo (dupla contagem); "
+            "`excluir` ignora a linha. Coluna `fator_pessoal_liquido` = 1 − Pessoal/(CPV+SG&A+Vendas).",
         ),
         (
             "R_eff",
@@ -1251,8 +1391,13 @@ pela literatura de referência.
         ),
         (
             "Score / score_0_100",
-            "Score bruto = Expo × F × ρ × fator de execução; depois normalizado **min–max** "
+            "Score bruto = min(Expo, p99) × F × ρ × fator de execução; depois normalizado **min–max** "
             "em 0–100 só entre empresas válidas do mesmo ano. Serve ao ranking relativo.",
+        ),
+        (
+            "Winsorização (winsor_exposicao_pct)",
+            "A exposição usada no score é truncada no percentil 99 do painel válido para que uma DFP "
+            "atípica não comprima a escala 0–100 das demais. O teto em R$ não é alterado.",
         ),
         (
             "Rank",
@@ -1269,7 +1414,21 @@ pela literatura de referência.
         (
             "E_s / Ē — multiplicador setorial",
             "Prior que escala α por setor (ex.: financeiro 1,25; commodities 0,75). "
-            "Hoje o setor é heurístico por nome.",
+            "O setor vem do SETOR_ATIV do cadastro CVM (fallback: nome).",
+        ),
+        (
+            "setor_fonte",
+            "De onde veio o setor: `cvm` (cadastro), `nome` (palavras-chave), `template` (plano de contas "
+            "financeiro) ou `padrao` (sem regra → outros).",
+        ),
+        (
+            "Categoria A / B (CVM)",
+            "Registro de emissor: **A** pode ter ações em bolsa; **B** só outros valores mobiliários (dívida). "
+            "Subsidiárias e SPEs são tipicamente B e, se entram só pela DFP individual, ficam fora do painel.",
+        ),
+        (
+            "origem_dfp",
+            "Se as demonstrações usadas são `consolidado` ou `individual` (companhia sem controladas).",
         ),
         (
             "DFP",
@@ -1284,9 +1443,9 @@ pela literatura de referência.
             "Bolsa brasileira; universo-alvo do indicador (companhias abertas com DFP).",
         ),
         (
-            "DRE / BPA / BPP / DVA",
-            "Demonstrações usadas na extração: Resultado, Ativo, Passivo e Valor Adicionado "
-            "(consolidado, na v0.1).",
+            "DRE / BPA / BPP / DVA / DFC",
+            "Demonstrações usadas na extração: Resultado, Ativo, Passivo, Valor Adicionado e Fluxo de Caixa "
+            "(consolidado; individual quando a companhia não publica consolidado).",
         ),
         (
             "SG&A",
@@ -1298,7 +1457,8 @@ pela literatura de referência.
         ),
         (
             "PDD / PeLD",
-            "Provisão para créditos de liquidação duvidosa — extraída por padrão de texto; cobertura irregular.",
+            "Provisão para créditos de liquidação duvidosa — DRE por texto, fallback DVA 7.01.04. "
+            "α = 0,40 em financeiras e 0,15 nas demais (`alpha_pdd_nao_financeiro`).",
         ),
         (
             "EBITDA (proxy)",

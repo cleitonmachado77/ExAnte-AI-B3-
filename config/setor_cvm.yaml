@@ -1,0 +1,85 @@
+# SETOR_ATIV do cadastro CVM (cad_cia_aberta.csv) → grupo setorial do índice.
+#
+# Casamento por substring no texto normalizado (maiúsculas, sem acento). O
+# prefixo de holding "EMP. ADM. PART. - " é removido antes de casar, de modo que
+# "Emp. Adm. Part. - Energia Elétrica" vira utilities. Ordem importa: primeira
+# batida vence. Setores sem batida (ou "Sem Setor Principal") caem na heurística
+# por nome (setor_keywords em pesos.yaml) e depois em "outros".
+regras:
+- contem: BANCOS
+  setor: financeiro
+- contem: INTERMEDIACAO FINANCEIRA
+  setor: financeiro
+- contem: SEGURADORAS
+  setor: financeiro
+- contem: CREDITO IMOBILIARIO
+  setor: financeiro
+- contem: ARRENDAMENTO MERCANTIL
+  setor: financeiro
+- contem: SECURITIZACAO
+  setor: financeiro
+- contem: FACTORING
+  setor: financeiro
+- contem: BOLSAS DE VALORES
+  setor: financeiro
+- contem: COMUNICACAO E INFORMATICA
+  setor: tecnologia
+- contem: COMERCIO
+  setor: varejo
+- contem: SERVICOS MEDICOS
+  setor: saude_educacao
+- contem: FARMACEUTICO
+  setor: saude_educacao
+- contem: EDUCACAO
+  setor: saude_educacao
+- contem: ENERGIA ELETRICA
+  setor: utilities
+- contem: TELECOMUNICACOES
+  setor: utilities
+- contem: SANEAMENTO
+  setor: utilities
+- contem: CONSTRUCAO CIVIL
+  setor: construcao
+- contem: CONST. CIVIL
+  setor: construcao
+- contem: PETROLEO E GAS
+  setor: commodities
+- contem: EXTRACAO MINERAL
+  setor: commodities
+- contem: MINERACAO
+  setor: commodities
+- contem: PAPEL E CELULOSE
+  setor: commodities
+- contem: AGRICULTURA
+  setor: commodities
+- contem: METALURGIA E SIDERURGIA
+  setor: commodities
+- contem: PETROQUIMICOS
+  setor: commodities
+- contem: REFLORESTAMENTO
+  setor: commodities
+- contem: PESCA
+  setor: commodities
+- contem: MAQUINAS
+  setor: industria
+- contem: MAQS.
+  setor: industria
+- contem: TEXTIL E VESTUARIO
+  setor: industria
+- contem: EMBALAGENS
+  setor: industria
+- contem: ALIMENTOS
+  setor: industria
+- contem: BEBIDAS E FUMO
+  setor: industria
+- contem: QUIMICA
+  setor: industria
+- contem: OUTRAS ATIVIDADES INDUSTRIAIS
+  setor: industria
+- contem: BRINQUEDOS E LAZER
+  setor: industria
+- contem: GRAFICAS E EDITORAS
+  setor: industria
+# Sem grupo próprio na v1 (caem na heurística por nome → "outros"):
+#   Serviços Transporte e Logística · Hospedagem e Turismo · Serviços Diversos ·
+#   Emp. Adm. Participações · Emp. Adm. Part. - Sem Setor Principal
