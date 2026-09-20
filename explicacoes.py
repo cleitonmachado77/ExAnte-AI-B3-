@@ -389,6 +389,7 @@ def explicar_final(row: pd.Series) -> str:
     r = _safe(row, "readiness")
     r100 = _safe(row, "readiness_0_100")
     r_bruto = _safe(row, "readiness_bruto")
+    r_eff = _safe(row, "readiness_efetiva")
     pct = _safe(row, "obj3_viavel_pct_receita")
     ajuste = _safe(row, "obj3_ajuste_execucao_rs")
     if ajuste is None:
@@ -403,7 +404,7 @@ def explicar_final(row: pd.Series) -> str:
             "(readiness tecnológica / organizacional).",
             "",
             "```",
-            "R_eff = clip(readiness × (1+λ), 0, 1)",
+            "R_eff = readiness^(1/(1+λ))",
             "fator_execução = φ + (1−φ) × R_eff",
             "Final = Viável × fator_execução",
             "```",
@@ -417,6 +418,7 @@ def explicar_final(row: pd.Series) -> str:
                 if r is not None and r100 is not None
                 else f"| Readiness (0–1) | {_fmt_num(r, 3) if r is not None else '—'} |"
             ),
+            f"| Readiness efetiva (R_eff) | {_fmt_num(r_eff, 3) if r_eff is not None else '—'} |",
             f"| Fator de execução | {_fmt_num(fator, 3)} |",
             f"| **Potencial final** | **{_fmt_money(final)}**"
             + (f" ({_fmt_pct(pct)} da receita)" if pct is not None else "")
@@ -427,6 +429,10 @@ def explicar_final(row: pd.Series) -> str:
             "O índice 0–100 é o **score relativo** no painel (min–max do score bruto), "
             "não um percentual da receita. **0** = menor score entre as válidas; "
             "**100** = maior — não significa potencial econômico zero.",
+            "",
+            "λ curva a readiness sem saturar: R_eff = R^(1/(1+λ)) é estritamente crescente "
+            "e mapeia [0, 1] em [0, 1], então nenhuma empresa é empatada artificialmente "
+            "no topo do Bloco C.",
         ]
     )
 
@@ -468,6 +474,10 @@ def explicar_score(row: pd.Series, n_painel: int | None = None) -> str:
             f"| Score bruto | {_fmt_num(bruto, 6) if bruto is not None else '—'} |",
             f"| **Índice 0–100** | **{_fmt_num(score, 1)}** |",
             f"| Posição | {rank_txt}{painel_txt} |",
+            "",
+            "ρ é **constante para todas as empresas**, e a normalização min–max cancela "
+            "qualquer constante: mudar ρ desloca o potencial em R$, mas não altera este "
+            "índice nem a posição no ranking. Ver `sensibilidade_rho_AAAA.csv`.",
             zero_nota,
         ]
     )

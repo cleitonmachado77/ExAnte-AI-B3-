@@ -530,7 +530,11 @@ def pagina_config(years: list[int], year_default: int | None) -> None:
                 value=float(pesos.get("rho_captura", 0.70)),
                 step=0.05,
                 key="cfg_rho",
-                help="Fração do teto teoricamente capturável mesmo com caixa pleno.",
+                help=(
+                    "Fração do teto teoricamente capturável mesmo com caixa pleno. "
+                    "Altera só o nível em R$: por ser constante entre empresas, é cancelada "
+                    "pela normalização min–max e não muda o score 0–100 nem o rank."
+                ),
             )
         with f2:
             phi = st.number_input(
@@ -553,6 +557,7 @@ def pagina_config(years: list[int], year_default: int | None) -> None:
                 value=float(pesos.get("lambda_ready", 0.10)),
                 step=0.01,
                 key="cfg_lambda",
+                help="Curvatura da readiness na execução: R_eff = R^(1/(1+λ)). λ = 0 → R_eff = R.",
             )
         with r2:
             w_soft = st.number_input(
@@ -635,7 +640,7 @@ def pagina_config(years: list[int], year_default: int | None) -> None:
                 _mark_dirty()
         st.info(
             "r = w_software·Soft/Ativo + w_intangivel·Intang/Ativo → R pela escala escolhida (0–1). "
-            "Viável = Teto×F×ρ. Final = Viável×(φ+(1−φ)×R_eff)."
+            "Viável = Teto×F×ρ. Final = Viável×(φ+(1−φ)×R_eff), com R_eff = R^(1/(1+λ))."
         )
 
     # ---- 5. Filtros ----

@@ -245,14 +245,19 @@ def compute_scores(df: pd.DataFrame, pesos: dict[str, Any]) -> pd.DataFrame:
         out["readiness"] = (r_bruto / ref).clip(0, 1) if ref > 0 else r_bruto.clip(0, 1)
     else:
         out["readiness"] = r_bruto.clip(0, 1)
-    lam = float(pesos.get("lambda_ready", 0.10))
+    lam = max(float(pesos.get("lambda_ready", 0.10)), 0.0)
 
     # Execução: sem readiness não se realiza 100% do viável; R eleva até 1,0
     phi = float(pesos.get("phi_execucao_base", 0.85))
     phi = min(max(phi, 0.0), 1.0)
-    # readiness efetiva levemente amplificada por λ (mantém papel do parâmetro)
-    r_eff = (out["readiness"] * (1.0 + lam)).clip(0, 1)
+    # λ curva a readiness para cima sem saturar: R^(1/(1+λ)) é estritamente
+    # crescente e mapeia [0,1] em [0,1]. A forma anterior, clip(R·(1+λ), 0, 1),
+    # empatava em R_eff = 1,0 todo R > 1/(1+λ) — ~9% do painel (43 empresas em
+    # 2024, 40 em 2025) perdia diferenciação justo no topo do Bloco C.
+    r_eff = out["readiness"].clip(0, 1) ** (1.0 / (1.0 + lam))
     fator_exec = phi + (1.0 - phi) * r_eff
+    out["lambda_ready"] = lam
+    out["readiness_efetiva"] = r_eff
     out["phi_execucao_base"] = phi
     out["fator_execucao"] = fator_exec
 
@@ -264,6 +269,16 @@ def compute_scores(df: pd.DataFrame, pesos: dict[str, Any]) -> pd.DataFrame:
     )
     # compatibilidade com colunas antigas da UI
     out["obj3_boost_readiness_rs"] = out["obj3_ajuste_execucao_rs"]
+
+    # Cenários de ρ (sensibilidade). ρ é constante multiplicativa idêntica para
+    # todas as empresas: desloca o nível em R$ dos objetivos 2 e 3, mas não a
+    # ordenação — score_0_100 e rank são invariantes a ρ por construção, porque
+    # a normalização min–max cancela qualquer fator constante.
+    for nome, valor in (pesos.get("rho_cenarios") or {}).items():
+        rho_c = min(max(float(valor), 0.0), 1.0)
+        viavel_c = out["obj1_teto_rs"] * out["f_fin"] * rho_c
+        out[f"obj2_viavel_rs_rho_{nome}"] = viavel_c
+        out[f"obj3_final_rs_rho_{nome}"] = viavel_c * fator_exec
 
     # Score relativo (ranking) — usa a exposição winsorizada
     out["score_bruto"] = out["exposicao_score"] * out["f_fin"] * rho * fator_exec

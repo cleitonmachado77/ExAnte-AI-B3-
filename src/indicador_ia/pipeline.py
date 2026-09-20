@@ -80,7 +80,7 @@ def run(year: int = 2024, force_download: bool = False) -> pd.DataFrame:
         "obj3_potencial_final_rs", "obj3_viavel_pct_receita", "obj3_boost_readiness_rs", "obj3_0_100",
         "exposicao", "exposicao_score", "exposicao_0_100",
         "f_fin", "f_fin_0_100", "f_caixa", "g_alavancagem", "h_fco",
-        "readiness", "readiness_bruto", "readiness_0_100", "mult_setor",
+        "readiness", "readiness_bruto", "readiness_efetiva", "readiness_0_100", "mult_setor",
         "rho_captura", "fator_execucao", "obj2_desconto_captura_rs", "obj2_desconto_total_rs",
         "obj3_ajuste_execucao_rs", "pessoal_modo", "fator_pessoal_liquido",
         "receita", "sga", "vendas", "pessoal", "cpv", "pdd", "estoques",
@@ -93,6 +93,11 @@ def run(year: int = 2024, force_download: bool = False) -> pd.DataFrame:
         "caixa_sobre_ativo", "dl_sobre_ebitda", "alerta_receita", "valido",
     ]
     cols = [c for c in cols if c in scored.columns]
+    cols += [
+        c
+        for c in scored.columns
+        if c.startswith(("obj2_viavel_rs_rho_", "obj3_final_rs_rho_")) and c not in cols
+    ]
     scored[cols].to_csv(out_path, encoding="utf-8-sig")
     print(f"  Ranking salvo: {out_path}")
 
@@ -127,5 +132,37 @@ def run(year: int = 2024, force_download: bool = False) -> pd.DataFrame:
     setor_avg.to_csv(setor_path, encoding="utf-8-sig")
     print(f"\nMédias setoriais: {setor_path}")
     print(setor_avg.to_string())
+
+    cenarios = pesos.get("rho_cenarios") or {}
+    if cenarios and not valid.empty:
+        rank_base = valid["obj3_potencial_final_rs"].rank(ascending=False, method="min")
+        total_base = float(valid["obj3_potencial_final_rs"].sum())
+        linhas = []
+        for nome, valor in cenarios.items():
+            rho_c = min(max(float(valor), 0.0), 1.0)
+            viavel = valid["obj1_teto_rs"] * valid["f_fin"] * rho_c
+            final = viavel * valid["fator_execucao"]
+            rank_c = final.rank(ascending=False, method="min")
+            linhas.append(
+                {
+                    "cenario": nome,
+                    "rho": rho_c,
+                    "viavel_total_rs": float(viavel.sum()),
+                    "final_total_rs": float(final.sum()),
+                    "final_vs_base": float(final.sum() / total_base) if total_base else float("nan"),
+                    "final_mediana_pct_receita": float(
+                        (100 * final / valid["receita"]).median()
+                    ),
+                    # ρ é constante multiplicativa → ordenação idêntica à base
+                    "spearman_rank_vs_base": float(rank_base.corr(rank_c)),
+                    "empresas_que_trocam_de_posicao": int((rank_c != rank_base).sum()),
+                }
+            )
+        sens = pd.DataFrame(linhas).sort_values("rho")
+        sens_path = OUTPUT / f"sensibilidade_rho_{year}.csv"
+        sens.to_csv(sens_path, index=False, encoding="utf-8-sig")
+        # console Windows é cp1252 e não codifica "ρ"
+        print(f"\nSensibilidade a rho: {sens_path}")
+        print(sens.to_string(index=False))
 
     return scored

@@ -184,6 +184,23 @@ def _card_objetivo(
 """
 
 
+def _formula(
+    passo: str,
+    nome: str,
+    latex: str,
+    faz: str,
+    serve: str,
+    produz: str,
+) -> None:
+    """Cartão padrão da aba Sobre: fórmula, o que ela calcula e por que existe."""
+    with st.container(border=True):
+        st.markdown(f"**{passo} · {nome}**")
+        st.latex(latex)
+        st.markdown(f"**Faz:** {faz}")
+        st.markdown(f"**Serve para:** {serve}")
+        st.caption(f"Produz: {produz}")
+
+
 def pagina_empresa(df: pd.DataFrame, year: int) -> None:
     st.subheader("Análise personalizada da empresa")
     st.caption(
@@ -890,135 +907,139 @@ streamlit run app.py
 """
     )
 
-    st.markdown("### 3. Fórmulas")
-    st.markdown("#### 3.1 Valor em R$ (o que o painel destaca)")
-
-    st.latex(r"Teto_i = \sum_k \min(|\tilde L_{i,k}|,\, 3\cdot ROL_i)\times \alpha_{k,s(i)}")
+    st.markdown("### 3. Fórmulas — o que cada uma faz e em qual objetivo entra")
     st.markdown(
-        "O **teto** é o ganho máximo teórico da empresa $i$: soma, sobre as linhas "
-        "de custo afetáveis $\\tilde L_{i,k}$ (SG&A, vendas, pessoal, CPV, PDD, estoques), "
-        "o valor absoluto limitado a 3× a receita operacional líquida ($ROL_i$), "
-        "multiplicado pelo fator de afetabilidade $\\alpha_{k,s(i)}$ da linha $k$ "
-        "no setor da empresa. O teto mede espaço econômico bruto — ainda sem capacidade "
-        "financeira nem execução."
+        "Nenhuma fórmula existe isolada: cada uma produz uma peça de **um dos três "
+        "objetivos** do indicador. A cadeia completa, do custo contábil ao número final, é:"
     )
     st.latex(
-        r"\tilde L_{i,k} = L_{i,k}\times\left(1 - \frac{Pessoal_i}{CPV_i + SGA_i + Vendas_i}\right)"
-        r"\quad k \in \{CPV, SGA, Vendas\}"
+        r"\underbrace{\sum_k \min\!\big(|\tilde L_{i,k}|,\, 3\,ROL_i\big)\,\alpha_{k,s}}"
+        r"_{\textbf{1. Teto}}"
+        r"\;\times\;\underbrace{F^{fin}_i \times \rho}_{\textbf{2. Viável}}"
+        r"\;\times\;\underbrace{\big(\phi + (1-\phi)R^{eff}_i\big)}_{\textbf{3. Final}}"
     )
-    st.markdown(
-        "**Sem dupla contagem de pessoal.** A linha *Pessoal* (DVA 7.08.01) já está embutida em "
-        "CPV, SG&A e despesas com vendas. No modo padrão (`pessoal_modo: liquido`) a folha é "
-        "retirada *pro rata* dessas três linhas e recebe seu próprio $\\alpha_{pessoal}$; "
-        "as demais linhas ficam só com a parcela não-salarial. Em bancos “Despesas de Pessoal” "
-        "já é linha separada e nada é subtraído. Os modos `separado` (versão antiga, superestimava "
-        "o teto em ~25%) e `excluir` continuam disponíveis."
-    )
-
-    st.latex(
-        r"F^{fin}_i = f\!\left(\frac{Caixa_i}{Ativo_i}\right) \times g\!\left(\frac{DL_i}{EBITDA_i}\right)"
-        r" \times h\!\left(\frac{FCO_i}{ROL_i}\right)"
-    )
-    st.markdown(
-        "A **viabilidade financeira** $F^{fin}_i$ combina liquidez ($f$: caixa sobre ativo), "
-        "alavancagem ($g$: dívida líquida sobre EBITDA) e **geração de caixa operacional** "
-        "($h$: FCO da DFC, conta 6.01, sobre a receita — empresa que queima caixa tem menos "
-        "folga para investir em IA mesmo com caixa em balanço). Valores próximos de 1 indicam "
-        "condição financeira favorável; valores menores comprimem o teto na etapa seguinte. "
-        "As faixas de $f$, $g$ e $h$ estão na seção 3.4."
-    )
-
-    st.latex(r"Viavel_i = Teto_i \times F^{fin}_i \times \rho")
-    st.markdown(
-        "O **potencial viável** aplica ao teto a capacidade financeira e a **taxa de captura** "
-        "$\\rho$ (cenário-base 0,70): reconhece que nem todo ganho teórico se materializa, "
-        "mesmo com caixa e endividamento adequados. É o segundo número do funil no painel."
-    )
-
-    st.latex(
-        r"r_i = w_{soft}\cdot\frac{Soft_i}{Ativo_i}"
-        r" + w_{intang}\cdot\frac{Intang_i}{Ativo_i}"
-        r"\qquad R_i = \mathrm{percentil}_{painel}(r_i) \in [0,1]"
-    )
-    st.markdown(
-        "O **readiness** $R_i$ resume a predisposição digital implícita no balanço "
-        "(software e intangíveis sobre o ativo total), com pesos $w_{soft}$ e $w_{intang}$. "
-        "Como essas razões ficam abaixo de 0,05 na quase totalidade das empresas, um simples "
-        "`clip(r, 0, 1)` deixaria o Bloco C inerte; por isso $R_i$ é a **posição relativa** "
-        "de $r_i$ entre as empresas válidas do ano (`readiness_modo: percentil`; alternativas "
-        "`escala` = $r/q_{90}$ e `bruto`). R não aumenta o teto; só informa a etapa de execução."
-    )
-
-    st.latex(r"R^{eff}_i = \mathrm{clip}_{[0,1]}(R_i\cdot(1+\lambda))")
-    st.markdown(
-        "A **readiness efetiva** amplifica levemente $R_i$ pelo fator $(1+\\lambda)$ "
-        "(cenário-base $\\lambda = 0{,}10$) e volta a clipar em [0, 1], evitando que "
-        "o ajuste ultrapasse o teto de 100% na execução."
-    )
-
-    st.latex(r"Final_i = Viavel_i \times \big(\phi + (1-\phi)\, R^{eff}_i\big)")
-    st.markdown(
-        "O **potencial final** é o resultado principal em R$: parte do viável e aplica o "
-        "**fator de execução** $\\phi + (1-\\phi) R^{eff}_i$. Com $\\phi = 0{,}85$, "
-        "mesmo readiness nulo preserva 85% do viável; readiness alto aproxima o final "
-        "de 100% do viável. Ordem no código: teto → F → viável (ρ) → R → final (φ)."
-    )
-
     st.markdown(
         """
-| Símbolo | Papel | Cenário-base |
-|---|---|---|
-| **ρ** | Taxa de captura (nem todo teto se realiza) | 0,70 |
-| **φ** | Execução base sem readiness | 0,85 |
-| **λ** | Amplifica levemente R na execução | 0,10 |
-| **w_soft / w_intang** | Pesos do Bloco C | 0,50 / 0,20 |
+| Objetivo | Pergunta que responde | Fórmulas que o constroem | Resultado |
+|---|---|---|---|
+| **1. Teto de eficiência** <br>*Bloco A · seção 3.1* | Quanto da estrutura de custos é teoricamente atacável por IA? | **A1** α efetivo · **A2** pessoal líquido · **A3** valor por linha · **A4** soma · *(**A5** exposição, só para o ranking)* | `obj1_teto_rs` |
+| **2. Potencial viável** <br>*Bloco B · seção 3.2* | Quanto desse teto a empresa tem condição financeira de bancar? | **B1** F = f·g·h · **B2** ρ · **B3** viável · *(**B4** decomposição do desconto)* | `obj2_potencial_viavel_rs` |
+| **3. Potencial final** <br>*Bloco C · seção 3.3* | Quanto ela consegue de fato executar? | **C1** r bruto · **C2** R percentil · **C3** R_eff · **C4** fator de execução · **C5** final | `obj3_potencial_final_rs` |
+| *Camada de ranking* <br>*seção 3.4* | Quem está melhor posicionado no painel do ano? | **S1** winsorização · **S2** score bruto · **S3** min–max e rank · **S4** índices auxiliares | `score_0_100` · `rank` |
 """
     )
+    st.info(
+        "**Regra de leitura do funil:** F, ρ e o fator de execução são todos ≤ 1, "
+        "portanto **Teto ≥ Viável ≥ Final** sempre. Nenhuma etapa posterior pode aumentar "
+        "a anterior — o Bloco C (readiness) não cria potencial, apenas define quanto do "
+        "viável se realiza."
+    )
 
-    st.markdown("#### 3.2 Score relativo (ranking)")
-    st.latex(
-        r"Score_i = \min(Expo_i,\, q_{99}) \times F^{fin}_i \times \rho"
-        r" \times \big(\phi + (1-\phi)\, R^{eff}_i\big)"
+    # ---------------------------------------------------------------- Obj. 1
+    st.markdown("#### 3.1 Objetivo 1 — Teto de eficiência · Bloco A (passos A1 a A5)")
+    st.caption(
+        "Pergunta: qual o ganho máximo teórico sobre a estrutura de custos, antes de "
+        "qualquer restrição financeira ou de execução? Quatro fórmulas em sequência "
+        "transformam contas da DFP em reais de potencial."
+    )
+
+    _formula(
+        "A1",
+        "α efetivo — quanto de cada linha é afetável",
+        r"\alpha_{k,s} = \min\left(\alpha^{base}_k \times \frac{E_s}{\bar E},\; \alpha_{max}=0{,}60\right)",
+        "parte do $\\alpha^{base}$ da linha $k$ (SG&A 0,30 · vendas 0,32 · pessoal 0,35 · "
+        "CPV 0,10 · PDD 0,40 · estoques 0,18) e escala pelo prior setorial $E_s/\\bar E$, "
+        "que vai de 0,75 em commodities a 1,25 em financeiro.",
+        "definir **que fração** de cada conta entra no teto. É o parâmetro de maior "
+        "impacto do modelo: mudar α muda o valor e a ordem do ranking.",
+        "`mult_setor` e o α aplicado em cada linha do passo 1.3.",
     )
     st.markdown(
-        "O **score bruto** replica o funil em razão da receita: "
-        "$Expo_i = Teto_i / ROL_i$, em seguida os mesmos fatores $F^{fin}$, $\\rho$ "
-        "e execução. A exposição é **winsorizada** no percentil 99 do painel válido "
-        "(`winsor_exposicao_pct`) para que uma DFP atípica não comprima a escala de todas as "
-        "outras; o teto em R$ não é alterado. Serve à **comparação relativa** entre empresas "
-        "(não substitui o potencial final em R$). O **rank** ordena pelo `score_0_100`."
+        "**Exceção — PDD.** Fora do setor financeiro a provisão para créditos é pequena e "
+        "pouco automatizável, então o $\\alpha^{base}$ cai de 0,40 para **0,15** "
+        "(`alpha_pdd_nao_financeiro`). **Sobre o $\\alpha_{max}$:** com a calibração atual o "
+        "maior α possível é 0,40 × 1,25 = 0,50, então o limite de 0,60 é um **trilho de "
+        "segurança** — protege edições feitas na aba Config e encosta no limite no teste de "
+        "robustez R1 (+20% em todos os α)."
     )
 
-    st.markdown("#### 3.3 Ajuste setorial do α")
-    st.latex(r"\alpha_{k,s} = \min\left(\alpha^{base}_k \times \frac{E_s}{\bar E},\; 0{,}60\right)")
+    _formula(
+        "A2",
+        "Pessoal líquido — remover a dupla contagem da folha",
+        r"\tilde L_{i,k} = L_{i,k}\times\left(1 - \frac{Pessoal_i}{CPV_i + SGA_i + Vendas_i}\right)"
+        r"\quad k \in \{CPV, SGA, Vendas\}",
+        "retira *pro rata* de CPV, SG&A e vendas a parcela que corresponde à folha "
+        "(DVA 7.08.01), deixando nessas linhas só o custo não-salarial.",
+        "impedir que a mesma despesa entre duas vezes no teto: a folha já está dentro "
+        "das três linhas e ainda recebe seu próprio $\\alpha_{pessoal}$. Sem esse ajuste "
+        "o teto era superestimado em cerca de 25%.",
+        "`fator_pessoal_liquido`, `sga_afetavel`, `vendas_afetavel`, `cpv_afetavel`.",
+    )
     st.markdown(
-        "O $\\alpha$ da linha $k$ no setor $s$ parte do $\\alpha^{base}_k$ e é "
-        "escalado pelo prior setorial $E_s/\\bar E$ (exposição relativa à média), "
-        "com teto de 0,60. Assim, setores com maior exposição ocupacional a IA elevam "
-        "a afetabilidade das mesmas linhas contábeis. Na v1, $E_s/\\bar E$ são "
-        "priors (tabela na seção 5). **Exceção — PDD:** fora do setor financeiro a provisão "
-        "para créditos é pequena e pouco automatizável; o $\\alpha^{base}$ da PDD cai de "
-        "0,40 para **0,15** (`alpha_pdd_nao_financeiro`), como sugere o documento de pesos."
+        "Em bancos “Despesas de Pessoal” já é linha separada no plano de contas e nada é "
+        "subtraído. Os modos `separado` (versão antiga, com dupla contagem) e `excluir` "
+        "seguem disponíveis em `pessoal_modo`."
     )
 
-    st.markdown("#### 3.4 Viabilidade financeira (detalhe de F)")
-    st.markdown("Já usada na etapa do viável. Faixas de $f$, $g$ e $h$:")
+    _formula(
+        "A3",
+        "Valor potencial de cada linha — a conta vira R$",
+        r"valor_{i,k} = \min\big(|\tilde L_{i,k}|,\; 3\cdot ROL_i\big)\times \alpha_{k,s}",
+        "multiplica a base afetável de cada linha pelo seu α, truncando o valor absoluto "
+        "em 3× a receita operacional líquida.",
+        "é o ponto em que a linha contábil se converte em dinheiro. O corte de 3× o $ROL$ "
+        "impede que uma DFP com escala ou preenchimento distorcido domine o painel.",
+        "`valor_sga_rs`, `valor_vendas_rs`, `valor_pessoal_rs`, `valor_cpv_rs`, "
+        "`valor_pdd_rs`, `valor_estoques_rs` — é a decomposição “De onde vem o teto” da ficha.",
+    )
 
+    _formula(
+        "A4",
+        "Teto de eficiência — o Objetivo 1",
+        r"Teto_i = \sum_k valor_{i,k}"
+        r"\qquad k \in \{SGA,\, Vendas,\, Pessoal,\, CPV,\, PDD,\, Estoques\}",
+        "soma as seis linhas afetáveis.",
+        "**é o Objetivo 1**: o espaço econômico bruto da empresa, o ponto de partida do "
+        "funil. Ainda não considera caixa, dívida nem capacidade de execução.",
+        "`obj1_teto_rs` e `obj1_teto_pct_receita`.",
+    )
+
+    _formula(
+        "A5",
+        "Exposição — o mesmo teto em razão da receita",
+        r"Expo_i = \sum_k \min\left(\frac{|\tilde L_{i,k}|}{ROL_i},\, 3\right)\alpha_{k,s}"
+        r"\;=\; \frac{Teto_i}{ROL_i}",
+        "repete a soma do teto, mas normalizada pela receita.",
+        "**não entra no valor em R$ de nenhum objetivo**. É a entrada da camada de "
+        "ranking (3.4), que precisa comparar empresas de portes muito diferentes sem que "
+        "as maiores dominem só por tamanho.",
+        "`exposicao`.",
+    )
+
+    # ---------------------------------------------------------------- Obj. 2
+    st.markdown("#### 3.2 Objetivo 2 — Potencial viável · Bloco B (passos B1 a B4)")
+    st.caption(
+        "Pergunta: desse teto, quanto a empresa tem condição financeira de bancar? "
+        "Duas restrições entram aqui — a situação de balanço (F) e uma taxa de captura (ρ)."
+    )
+
+    _formula(
+        "B1",
+        "F financeiro — capacidade de bancar a adoção",
+        r"F^{fin}_i = f\!\left(\frac{Caixa_i}{Ativo_i}\right)\times"
+        r" g\!\left(\frac{DL_i}{EBITDA_i}\right)\times h\!\left(\frac{FCO_i}{ROL_i}\right)",
+        "combina três notas em degrau — liquidez ($f$), alavancagem ($g$) e geração de "
+        "caixa operacional ($h$) — num único multiplicador entre 0,19 e 1,00.",
+        "reconhecer que ter oportunidade não é ter dinheiro: empresa sem caixa, muito "
+        "endividada ou queimando caixa não consegue investir em IA. $F = 1$ significa "
+        "nenhum desconto financeiro.",
+        "`f_caixa`, `g_alavancagem`, `h_fco`, `f_fin` e `f_fin_0_100`.",
+    )
+
+    st.markdown("**Faixas das três funções de $F$**")
     c1, c2, c3 = st.columns(3)
-    with c3:
-        st.markdown("**Função $h$ — geração de caixa**")
-        st.dataframe(
-            pd.DataFrame(
-                {
-                    "FCO / ROL": ["< 0 (queima caixa)", "≥ 0", "Sem DFC / inst. financeira"],
-                    "h": ["0,85", "1,00", "1,00"],
-                }
-            ),
-            hide_index=True,
-            use_container_width=True,
-        )
     with c1:
-        st.markdown("**Função $f$ — caixa/ativo**")
+        st.markdown("**$f$ — liquidez**")
         st.dataframe(
             pd.DataFrame(
                 {
@@ -1030,12 +1051,24 @@ streamlit run app.py
             use_container_width=True,
         )
     with c2:
-        st.markdown("**Função $g$ — alavancagem**")
+        st.markdown("**$g$ — alavancagem**")
         st.dataframe(
             pd.DataFrame(
                 {
                     "DL / EBITDA": ["< 2,0×", "2,0× ≤ x < 3,5×", "≥ 3,5×", "EBITDA ≤ 0", "Inst. financeira"],
                     "g": ["1,00", "0,70", "0,40", "0,25", "1,00 (fixo)"],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+    with c3:
+        st.markdown("**$h$ — geração de caixa**")
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "FCO / ROL": ["< 0 (queima caixa)", "≥ 0", "Sem DFC / inst. financeira"],
+                    "h": ["0,85", "1,00", "1,00"],
                 }
             ),
             hide_index=True,
@@ -1047,27 +1080,223 @@ streamlit run app.py
         "com a carteira de crédito. Usa-se g fixo (`g_financeiro`), h = 1 e apenas f(Caixa/Ativo) diferencia."
     )
 
-    st.markdown("#### 3.5 Readiness e execução")
-    st.markdown(
-        "O Bloco C não *aumenta* o teto: ele define quanto do **viável** se realiza. "
-        "Com φ = 0,85 e R ≈ 0, o final fica em 85% do viável; com R alto, aproxima-se de 100% do viável. "
-        "Como R é percentil no painel, o fator de execução se distribui de fato entre 0,85 e 1,0 "
-        "(antes, com clip da razão bruta, ficava ≈ 0,85 para quase todas). "
-        "P&D (`w_ped`) está reservado na calibração e **ainda não entra** no cálculo da v0.1."
+    _formula(
+        "B2",
+        "ρ — taxa de captura",
+        r"\rho = 0{,}70 \quad \text{(constante para todas as empresas)}",
+        "aplica um redutor único sobre o teto já ajustado por F.",
+        "reconhecer que nem todo ganho teórico se materializa, mesmo numa empresa com "
+        "caixa e endividamento confortáveis. É **parâmetro de nível, não de ordenação** — "
+        "ver a proposição em 3.2.1.",
+        "`rho_captura` e as colunas de cenário `obj2_viavel_rs_rho_*` / `obj3_final_rs_rho_*`.",
     )
 
-    st.markdown("#### 3.6 Normalização 0–100")
-    st.latex(
-        r"Score^{0\text{-}100}_i ="
-        r" 100 \times \frac{Score_i - \min(Score)}{\max(Score) - \min(Score)}"
+    _formula(
+        "B3",
+        "Potencial viável — o Objetivo 2",
+        r"Viavel_i = Teto_i \times F^{fin}_i \times \rho",
+        "comprime o teto pelas duas restrições da etapa.",
+        "**é o Objetivo 2**: a parcela do ganho máximo que é financeiramente alcançável. "
+        "É o segundo número do funil na ficha da empresa.",
+        "`obj2_potencial_viavel_rs` e `obj2_viavel_pct_receita`.",
+    )
+
+    _formula(
+        "B4",
+        "Decomposição do desconto (auxiliar)",
+        r"desc^{fin}_i = Teto_i(1-F^{fin}_i)"
+        r"\qquad desc^{capt}_i = Teto_i\,F^{fin}_i(1-\rho)",
+        "separa quanto do teto se perdeu por restrição financeira e quanto por taxa de captura.",
+        "explicar o funil na interface. **Não alimenta o Objetivo 3** — é apenas leitura.",
+        "`obj2_desconto_financeiro_rs`, `obj2_desconto_captura_rs`, `obj2_desconto_total_rs`.",
+    )
+
+    st.markdown("#### 3.2.1 Invariância do ranking a ρ")
+    st.markdown(
+        "**Proposição.** O `score_0_100` e o `rank` (definidos adiante em 3.4) são "
+        "invariantes a $\\rho$. "
+        "Como $\\rho$ é constante e idêntica para todas as empresas, ela é um fator "
+        "multiplicativo comum no score bruto, e a normalização min–max "
+        "$100(S-\\min)/(\\max-\\min)$ cancela qualquer constante positiva. "
+        "Logo $\\rho$ desloca apenas o **nível em R$** dos objetivos 2 e 3."
     )
     st.markdown(
-        "A escala **0–100** é uma normalização min–max do score bruto **somente entre "
-        "empresas válidas do mesmo ano**: o pior score do painel vira 0 e o melhor, 100. "
-        "Não é percentil (há a opção `normalizacao_score: percentil` na Config). Como a exposição "
-        "que entra no score é winsorizada (3.2), o topo da escala corresponde ao percentil 99 de "
-        "exposição, não ao outlier. Os índices auxiliares `obj1_0_100`, `obj2_0_100` e `obj3_0_100` "
-        "são percentis do valor em R$ (uso interno); a ficha destaca R$ e % da receita."
+        "Isso é uma **propriedade desejável, não uma falha**: a ordenação do índice não "
+        "depende do parâmetro mais arbitrário do modelo. Vale registrar que $\\rho$ também "
+        "**não pode** ser diferenciada por setor ou por linha sem virar redundância — "
+        "$\\rho_s$ seria absorvida por $E_s/\\bar E$ e $\\rho_k$ por $\\alpha^{base}_k$, já "
+        "que ambos multiplicam os mesmos termos. Diferenciá-la exigiria ancorá-la em uma "
+        "variável ainda fora da cadeia (porte da firma, por exemplo)."
+    )
+    st.markdown(
+        "O pipeline materializa a sensibilidade em `rho_cenarios` (`pesos.yaml`), gerando "
+        "colunas por cenário no ranking e o arquivo `output/sensibilidade_rho_AAAA.csv`:"
+    )
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Cenário": ["Conservador", "Base", "Otimista"],
+                "ρ": ["0,50", "0,70", "0,90"],
+                "Potencial final do painel vs. base": ["0,71×", "1,00×", "1,29×"],
+                "Mediana do % da receita (2025)": ["4,27%", "5,98%", "7,69%"],
+                "Spearman do rank vs. base": ["1,000", "1,000", "1,000"],
+                "Empresas que trocam de posição": ["0", "0", "0"],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    # ---------------------------------------------------------------- Obj. 3
+    st.markdown("#### 3.3 Objetivo 3 — Potencial final · Bloco C (passos C1 a C5)")
+    st.caption(
+        "Pergunta: do que é financeiramente viável, quanto a empresa consegue executar? "
+        "Aqui entra o Bloco C (readiness digital), em quatro passos. Este é o resultado "
+        "principal da ficha."
+    )
+
+    _formula(
+        "C1",
+        "Readiness bruto — base digital no balanço",
+        r"r_i = w_{soft}\cdot\frac{Soft_i}{Ativo_i} + w_{intang}\cdot\frac{Intang_i}{Ativo_i}",
+        "combina software e intangível sobre o ativo total, com pesos 0,50 e 0,20.",
+        "aproximar a **capacidade de absorção** (Cohen & Levinthal): ter oportunidade e "
+        "dinheiro não basta se a empresa não tem base tecnológica instalada.",
+        "`readiness_bruto`.",
+    )
+
+    _formula(
+        "C2",
+        "Readiness normalizada — posição relativa no painel",
+        r"R_i = \mathrm{percentil}_{painel}(r_i) \in [0,1]",
+        "converte $r_i$ na posição relativa da empresa entre as válidas do ano.",
+        "tornar o Bloco C operante. As razões $Soft/Ativo$ e $Intang/Ativo$ ficam abaixo "
+        "de 0,05 em quase todas as companhias, então um `clip(r, 0, 1)` direto deixaria "
+        "o bloco inerte. Alternativas: `escala` ($r/q_{90}$) e `bruto`.",
+        "`readiness` e `readiness_0_100`.",
+    )
+
+    _formula(
+        "C3",
+        "Readiness efetiva — curvatura por λ",
+        r"R^{eff}_i = R_i^{\,1/(1+\lambda)} \qquad \lambda = 0{,}10",
+        "curva $R_i$ para cima com expoente $1/(1+\\lambda)$, ou seja $R^{0,909}$.",
+        "dar peso um pouco maior à readiness sem distorcer a escala. A transformação é "
+        "estritamente crescente e mapeia [0, 1] em [0, 1], então **não precisa de clip e "
+        "não satura**. Com $\\lambda = 0$ tem-se $R^{eff} = R$.",
+        "`readiness_efetiva`.",
+    )
+    st.markdown(
+        "**Por que não é mais $\\mathrm{clip}(R\\cdot(1+\\lambda))$.** A forma anterior "
+        "empatava em $R^{eff} = 1$ toda empresa acima do percentil $1/(1+\\lambda)$: eram "
+        "43 companhias em 2024 e 40 em 2025 com fator de execução idêntico, justamente no "
+        "topo do Bloco C — o grupo que o bloco existe para diferenciar. Com a curvatura, o "
+        "empate no topo caiu para **1 empresa** (a 1ª colocada em readiness, por construção) "
+        "e o fator de execução passou a assumir 415 valores distintos entre as 434 válidas "
+        "de 2025."
+    )
+
+    _formula(
+        "C4",
+        "Fator de execução",
+        r"exec_i = \phi + (1-\phi)\,R^{eff}_i \qquad \phi = 0{,}85",
+        "traduz a readiness num multiplicador que varia de 0,85 a 1,00.",
+        "graduar quanto do viável se realiza: com readiness nula preserva 85% do viável; "
+        "com readiness máxima chega a 100%. O piso $\\phi$ garante que mesmo uma empresa "
+        "sem base digital capture a maior parte do potencial.",
+        "`fator_execucao` e `phi_execucao_base`.",
+    )
+
+    _formula(
+        "C5",
+        "Potencial final — o Objetivo 3",
+        r"Final_i = Viavel_i \times \big(\phi + (1-\phi)\, R^{eff}_i\big)",
+        "aplica o fator de execução sobre o potencial viável.",
+        "**é o Objetivo 3 e o resultado principal do indicador**: o número em R$ e em % "
+        "da receita que a ficha da empresa destaca.",
+        "`obj3_potencial_final_rs`, `obj3_viavel_pct_receita` e `obj3_ajuste_execucao_rs`.",
+    )
+    st.caption(
+        "Ordem no código: teto → F → viável (ρ) → R → final (φ). Os empates que ainda "
+        "restam no fator de execução vêm de companhias com `readiness_bruto` exatamente "
+        "igual — cerca de 5% do painel, sem software nem intangível identificáveis, que "
+        "compartilham o mesmo percentil médio. O peso de P&D (`w_ped`) está reservado na "
+        "calibração e ainda não entra no cálculo da v0.1."
+    )
+
+    # ------------------------------------------------------------- Ranking
+    st.markdown("#### 3.4 Camada de ranking — não é um objetivo, ordena o painel (passos S1 a S4)")
+    st.caption(
+        "As fórmulas acima produzem valores em R$, comparáveis entre anos. Esta camada "
+        "existe para outra pergunta: **quem está melhor posicionado dentro do painel deste "
+        "ano**. Ela reaproveita o funil, mas partindo da exposição (1.5) em vez do teto em R$."
+    )
+
+    _formula(
+        "S1",
+        "Winsorização da exposição",
+        r"Expo^{score}_i = \min\big(Expo_i,\; q_{99}\big)",
+        "trunca a exposição no percentil 99 do painel válido.",
+        "impedir que uma DFP atípica ocupe sozinha o topo e comprima a escala 0–100 de "
+        "todas as demais. **O teto em R$ não é alterado** — o corte vale só para o score.",
+        "`exposicao_score` e `exposicao_winsor_limite`.",
+    )
+
+    _formula(
+        "S2",
+        "Score bruto — o funil em razão da receita",
+        r"Score_i = \min(Expo_i,\, q_{99}) \times F^{fin}_i \times \rho"
+        r" \times \big(\phi + (1-\phi)\, R^{eff}_i\big)",
+        "repete exatamente os fatores dos objetivos 2 e 3, mas sobre a exposição "
+        "winsorizada em vez do teto em reais.",
+        "permitir **comparação relativa** entre empresas de portes diferentes. Não "
+        "substitui o potencial final em R$, que continua sendo o resultado do indicador.",
+        "`score_bruto`.",
+    )
+
+    _formula(
+        "S3",
+        "Normalização 0–100 e rank",
+        r"Score^{0\text{-}100}_i = 100 \times"
+        r" \frac{Score_i - \min(Score)}{\max(Score) - \min(Score)}",
+        "aplica min–max **somente entre as válidas do mesmo ano** e ordena em seguida: o "
+        "pior score do painel vira 0 e o melhor vira 100.",
+        "produzir a escala de leitura do ranking. Por ser relativa ao painel, **score de "
+        "2024 não se compara com score de 2025** sem reprocessar. Há a opção "
+        "`normalizacao_score: percentil` na aba Config.",
+        "`score_0_100` e `rank` (1º = maior score).",
+    )
+
+    _formula(
+        "S4",
+        "Índices auxiliares 0–100",
+        r"obj_n^{0\text{-}100} = \mathrm{percentil}_{painel}\big(obj_n^{R\$}\big)\times 100",
+        "converte cada objetivo em R$ para percentil dentro do painel válido.",
+        "leitura auxiliar na tabela de ranking. São **percentis**, não min–max como o "
+        "score principal; a ficha da empresa destaca R$ e % da receita.",
+        "`obj1_0_100`, `obj2_0_100`, `obj3_0_100`, `exposicao_0_100`, `f_fin_0_100`.",
+    )
+
+    # -------------------------------------------------------- Parâmetros
+    st.markdown("#### 3.5 Parâmetros do cenário-base")
+    st.markdown(
+        """
+| Símbolo | Passo | Papel | Base |
+|---|---|---|---|
+| **α_base** | A1 | Fração afetável de cada linha contábil | 0,10 a 0,40 |
+| **E_s / Ē** | A1 | Prior setorial que escala o α | 0,75 a 1,25 |
+| **α_max** | A1 | Trilho de segurança do α efetivo | 0,60 |
+| **cap L/ROL** | A3 | Trava de cada linha em múltiplos da receita | 3,0× |
+| **ρ** | B2 | Taxa de captura — parâmetro de **nível**, não de ordenação | 0,70 |
+| **w_soft / w_intang** | C1 | Pesos do readiness | 0,50 / 0,20 |
+| **λ** | C3 | Curvatura de R: R_eff = R^(1/(1+λ)) | 0,10 |
+| **φ** | C4 | Piso de execução sem readiness | 0,85 |
+| **winsor** | S1 | Percentil de corte da exposição no score | 0,99 |
+"""
+    )
+    st.caption(
+        "Todos editáveis na aba **Config**, que grava em `config/pesos.yaml` e permite "
+        "recalcular o ranking do ano sem sair da interface."
     )
 
     st.markdown("### 4. Linhas contábeis (Blocos A, B e C)")
@@ -1476,7 +1705,10 @@ pela literatura de referência.
         (
             "ρ (rho) — taxa de captura",
             "Fração do teto teoricamente capturável mesmo com capacidade financeira plena. "
-            "Cenário-base: 0,70. Entra em: Viável = Teto × F × ρ.",
+            "Cenário-base: 0,70. Entra em: Viável = Teto × F × ρ. É **parâmetro de nível, não "
+            "de ordenação**: por ser constante para todas as empresas, é cancelada pela "
+            "normalização min–max, e o `score_0_100` e o `rank` não mudam com ρ (ver 3.2.1). "
+            "Cenários de sensibilidade em `rho_cenarios`: 0,50 / 0,70 / 0,90.",
         ),
         (
             "φ (phi) — execução base",
@@ -1485,8 +1717,9 @@ pela literatura de referência.
         ),
         (
             "λ (lambda)",
-            "Parâmetro que **amplifica** o readiness na execução: R_eff = clip(R × (1+λ)). "
-            "Cenário-base: 0,10. Não cria potencial acima do viável.",
+            "Parâmetro de **curvatura** do readiness na execução: R_eff = R^(1/(1+λ)). "
+            "Cenário-base: 0,10. Estritamente crescente e sem saturação — não cria potencial "
+            "acima do viável nem empata o topo do painel. Com λ = 0, R_eff = R.",
         ),
         (
             "F / F^fin — capacidade financeira",
@@ -1525,7 +1758,7 @@ pela literatura de referência.
         ),
         (
             "R_eff",
-            "Readiness efetiva usada na execução: clip(R × (1+λ), 0, 1).",
+            "Readiness efetiva usada na execução: R^(1/(1+λ)). Coluna `readiness_efetiva`.",
         ),
         (
             "Teto (Objetivo 1)",

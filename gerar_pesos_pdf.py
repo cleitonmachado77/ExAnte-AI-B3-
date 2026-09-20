@@ -237,7 +237,7 @@ def build():
         formula_image(
             r"Final_i = Viavel_i \times \left(\phi + (1-\phi)\,R^{eff}_i\right)"
             r"\quad;\quad"
-            r"R^{eff}_i = \mathrm{clip}_{[0,1]}\left(R_i(1+\lambda)\right)",
+            r"R^{eff}_i = R_i^{\,1/(1+\lambda)}",
             "f_funil2.png",
             fontsize=13,
         )
@@ -256,6 +256,11 @@ def build():
             "Cenário-base: ρ = 0,70 (taxa de captura), φ = 0,85 (execução sem readiness), λ = 0,10. "
             "A forma conceitual <i>Expo × F × (1 + λR)</i> dos documentos de consenso foi substituída "
             "por esta especificação multiplicativa, em que o Bloco C nunca eleva o potencial acima do viável. "
+            "λ entra como <b>curvatura</b> (R<sup>1/(1+λ)</sup>), transformação estritamente crescente de "
+            "[0, 1] em [0, 1] que dispensa clip e não empata o topo da readiness. "
+            "ρ é <b>parâmetro de nível, não de ordenação</b>: sendo constante entre empresas, é cancelada "
+            "pela normalização min–max, de modo que o ranking é invariante a ρ (cenários 0,50 / 0,70 / 0,90 "
+            "em <i>rho_cenarios</i>, com evidência em <i>sensibilidade_rho_AAAA.csv</i>). "
             "A exposição que entra no score é <b>winsorizada</b> no percentil 99 do painel válido "
             "(<i>winsor_exposicao_pct</i>), para que uma DFP atípica não comprima a escala 0–100 das demais; "
             "o teto em R$ não é alterado.",
