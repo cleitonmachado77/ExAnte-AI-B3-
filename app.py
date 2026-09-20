@@ -12,10 +12,28 @@ import pandas as pd
 import streamlit as st
 
 from config_ui import pagina_config
+from explicacoes import (
+    explicar_comparativo_linha,
+    explicar_empresa_resumo,
+    explicar_final,
+    explicar_linha_bruta,
+    explicar_linha_teto,
+    explicar_metrica,
+    explicar_score,
+    explicar_teto,
+    explicar_viavel,
+    load_pesos,
+)
 
 ROOT = Path(__file__).resolve().parent
 OUTPUT = ROOT / "output"
 PRODUCT_NAME = "ExAnte-AI (B3)"
+
+
+def _zoom_popover(label: str, markdown: str, *, key: str | None = None) -> None:
+    """Botão-popup com a explicação de como o resultado foi obtido."""
+    with st.popover(label, help="Clique para ver como este resultado foi obtido"):
+        st.markdown(markdown)
 
 st.set_page_config(
     page_title=f"{PRODUCT_NAME}",
@@ -192,29 +210,16 @@ def pagina_empresa(df: pd.DataFrame, year: int) -> None:
     row = df[df["DENOM_CIA"] == escolhida].iloc[0]
     setor = str(row.get("setor", "outros"))
     peers = df[df["setor"] == setor]
+    pesos = load_pesos()
+    n_painel = len(df)
 
     rank_val = row.get("rank")
-    n_painel = len(df)
     if pd.notna(rank_val) and n_painel > 0:
         rank_i = int(rank_val)
         st.markdown(
             """
 <style>
-/* Nome + posição na mesma linha, lado a lado */
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-  align-items: baseline !important;
-  flex-wrap: wrap !important;
-  gap: 0.85rem !important;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div[data-testid="column"] {
-  width: auto !important;
-  flex: 0 1 auto !important;
-  min-width: fit-content !important;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) h3 {
-  margin: 0 !important;
-  padding: 0 !important;
-}
+/* Popovers de zoom: azul pequeno; ranking ao lado do nome um pouco maior */
 div[data-testid="stPopover"] button {
   background: transparent !important;
   border: none !important;
@@ -226,13 +231,31 @@ div[data-testid="stPopover"] button {
 }
 div[data-testid="stPopover"] button p {
   color: #2563eb !important;
-  font-weight: 600 !important;
-  font-size: 1.75rem !important;
-  line-height: 1.2 !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+  line-height: 1.25 !important;
   margin: 0 !important;
 }
 div[data-testid="stPopover"] button svg {
   display: none !important;
+}
+div[data-testid="stHorizontalBlock"]:has(h3):has(div[data-testid="stPopover"]) {
+  align-items: baseline !important;
+  flex-wrap: wrap !important;
+  gap: 0.85rem !important;
+}
+div[data-testid="stHorizontalBlock"]:has(h3):has(div[data-testid="stPopover"]) > div[data-testid="column"] {
+  width: auto !important;
+  flex: 0 1 auto !important;
+  min-width: fit-content !important;
+}
+div[data-testid="stHorizontalBlock"]:has(h3):has(div[data-testid="stPopover"]) h3 {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(h3):has(div[data-testid="stPopover"]) div[data-testid="stPopover"] button p {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
 }
 </style>
             """,
@@ -336,6 +359,8 @@ A ordenação usa o score 0–100 (1º = melhor).
             "pct": safe(row, "obj1_teto_pct_receita"),
             "pct_label": "ganho máximo estimado",
             "ajuste": "Ponto de partida do funil (ainda sem F, ρ nem execução).",
+            "explicacao": explicar_teto(row, pesos),
+            "zoom_label": "Como o teto foi obtido?",
         },
         {
             "nome": "Potencial viável",
@@ -350,6 +375,8 @@ A ordenação usa o score 0–100 (1º = melhor).
                 f"desconto total vs teto: {fmt_money(desconto_tot)} "
                 f"(financeiro {fmt_money(desconto_fin)} + captura {fmt_money(desconto_cap)})"
             ),
+            "explicacao": explicar_viavel(row),
+            "zoom_label": "Como o viável foi obtido?",
         },
         {
             "nome": "Potencial final",
@@ -363,16 +390,24 @@ A ordenação usa o score 0–100 (1º = melhor).
                 f"ajuste vs viável: {fmt_money(ajuste_exec)} · "
                 f"score: {fmt_num(safe(row, 'score_0_100'), 1)}/100"
             ),
+            "explicacao": explicar_final(row),
+            "zoom_label": "Como o final foi obtido?",
         },
     ]
 
     cols = st.columns(3)
     for col, o in zip(cols, objetivos):
         with col:
-            st.markdown(_card_objetivo(**o), unsafe_allow_html=True)
+            card_kwargs = {k: v for k, v in o.items() if k not in {"explicacao", "zoom_label"}}
+            st.markdown(_card_objetivo(**card_kwargs), unsafe_allow_html=True)
+            _zoom_popover(o["zoom_label"], o["explicacao"])
+
+    with st.popover("Como o índice 0–100 foi obtido?"):
+        st.markdown(explicar_score(row, n_painel=n_painel))
 
     # Funil visual dos 3 objetivos
     st.markdown("#### Funil de valor (R$)")
+    st.caption("Clique em cada etapa abaixo do gráfico para o zoom do cálculo.")
 
     funil_df = pd.DataFrame(
         {
@@ -435,9 +470,19 @@ A ordenação usa o score 0–100 (1º = melhor).
         .properties(height=160)
     )
     st.altair_chart(funil_chart, use_container_width=True)
+    f1, f2, f3 = st.columns(3)
+    with f1:
+        _zoom_popover("Zoom: Teto", explicar_teto(row, pesos))
+    with f2:
+        _zoom_popover("Zoom: Viável", explicar_viavel(row))
+    with f3:
+        _zoom_popover("Zoom: Final", explicar_final(row))
 
     # De onde vem o valor
     st.markdown("#### De onde vem o teto (R$ por linha contábil)")
+    st.caption(
+        "Clique em uma **linha** da tabela para abrir o zoom — inclusive quando o valor for **0,0%**."
+    )
     origem = pd.Series(
         {
             "SG&A": safe(row, "valor_sga_rs"),
@@ -455,7 +500,7 @@ A ordenação usa o score 0–100 (1º = melhor).
     with c_b:
         detalhe = pd.DataFrame(
             {
-                "Linha": origem.index,
+                "Linha": list(origem.index),
                 "Potencial R$": [fmt_money(v) for v in origem.values],
                 "% do teto": [
                     fmt_pct(100 * v / safe(row, "obj1_teto_rs"))
@@ -465,7 +510,27 @@ A ordenação usa o score 0–100 (1º = melhor).
                 ],
             }
         )
-        st.dataframe(detalhe, hide_index=True, use_container_width=True)
+        evento_teto = st.dataframe(
+            detalhe,
+            hide_index=True,
+            use_container_width=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key=f"zoom_teto_{escolhida}",
+        )
+        sel_teto = evento_teto.selection.rows if evento_teto and evento_teto.selection else []
+        if sel_teto:
+            rotulo = str(detalhe.iloc[sel_teto[0]]["Linha"])
+            with st.container(border=True):
+                st.markdown(explicar_linha_teto(row, rotulo, pesos))
+        st.caption("Atalhos de zoom por linha:")
+        zcols = st.columns(3)
+        for i, rotulo in enumerate(origem.index):
+            with zcols[i % 3]:
+                _zoom_popover(
+                    f"Zoom: {rotulo}",
+                    explicar_linha_teto(row, rotulo, pesos),
+                )
     fpl = row.get("fator_pessoal_liquido") if "fator_pessoal_liquido" in row.index else None
     if fpl is not None and pd.notna(fpl) and float(fpl) < 0.999:
         st.caption(
@@ -476,6 +541,7 @@ A ordenação usa o score 0–100 (1º = melhor).
 
     # Comparativo
     st.markdown("#### Comparativo")
+    st.caption("Clique em uma linha para ver de onde vêm os números.")
     peers_sorted = peers.sort_values("score_0_100", ascending=False).reset_index(drop=True)
     pos_setor = int(peers_sorted.index[peers_sorted["DENOM_CIA"] == escolhida][0]) + 1
     comp = pd.DataFrame(
@@ -506,11 +572,23 @@ A ordenação usa o score 0–100 (1º = melhor).
             ],
         }
     )
-    st.dataframe(comp, hide_index=True, use_container_width=True)
+    evento_comp = st.dataframe(
+        comp,
+        hide_index=True,
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key=f"zoom_comp_{escolhida}",
+    )
+    sel_comp = evento_comp.selection.rows if evento_comp and evento_comp.selection else []
+    if sel_comp:
+        ref = str(comp.iloc[sel_comp[0]]["Referência"])
+        st.markdown(explicar_comparativo_linha(ref, row, peers, df))
     st.caption(f"Posição no setor: #{pos_setor} / {len(peers)}")
 
     # Linhas brutas
     with st.expander("Ver linhas contábeis brutas usadas no cálculo", expanded=True):
+        st.caption("Clique em uma linha para o zoom do valor contábil.")
         receita = safe(row, "receita")
         linhas = [
             ("Receita (ROL)", "receita", False),
@@ -530,21 +608,46 @@ A ordenação usa o score 0–100 (1º = melhor).
         for label, col, as_pct in linhas:
             val = row[col] if col in row.index else float("nan")
             if pd.isna(val):
-                rows_tab.append({"Linha": label, "Valor": "—", "% da receita": "—"})
+                rows_tab.append({"Linha": label, "Valor": "—", "% da receita": "—", "_col": col})
             else:
                 pct = f"{100 * abs(float(val)) / receita:.1f}%" if as_pct and receita else "—"
-                rows_tab.append({"Linha": label, "Valor": fmt_money(val), "% da receita": pct})
-        st.dataframe(pd.DataFrame(rows_tab), hide_index=True, use_container_width=True)
+                rows_tab.append(
+                    {"Linha": label, "Valor": fmt_money(val), "% da receita": pct, "_col": col}
+                )
+        tab_brutas = pd.DataFrame(rows_tab)
+        evento_brutas = st.dataframe(
+            tab_brutas[["Linha", "Valor", "% da receita"]],
+            hide_index=True,
+            use_container_width=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key=f"zoom_brutas_{escolhida}",
+        )
+        sel_brutas = (
+            evento_brutas.selection.rows if evento_brutas and evento_brutas.selection else []
+        )
+        if sel_brutas:
+            rsel = tab_brutas.iloc[sel_brutas[0]]
+            st.markdown(explicar_linha_bruta(row, str(rsel["Linha"]), str(rsel["_col"])))
 
         v1, v2, v3, v4 = st.columns(4)
-        v1.metric("Caixa / Ativo", fmt_pct(100 * safe(row, "caixa_sobre_ativo")))
-        dl = row["dl_sobre_ebitda"] if "dl_sobre_ebitda" in row.index else float("nan")
-        v2.metric("DL / EBITDA", fmt_num(dl, 2) if pd.notna(dl) else "—")
-        fr = row["fco_sobre_receita"] if "fco_sobre_receita" in row.index else float("nan")
-        v3.metric("FCO / Receita", fmt_pct(100 * float(fr)) if pd.notna(fr) else "—")
-        v4.metric("Multiplicador setorial", fmt_num(row.get("mult_setor", 1), 2))
+        with v1:
+            st.metric("Caixa / Ativo", fmt_pct(100 * safe(row, "caixa_sobre_ativo")))
+            _zoom_popover("Como?", explicar_metrica(row, "caixa_ativo"))
+        with v2:
+            dl = row["dl_sobre_ebitda"] if "dl_sobre_ebitda" in row.index else float("nan")
+            st.metric("DL / EBITDA", fmt_num(dl, 2) if pd.notna(dl) else "—")
+            _zoom_popover("Como?", explicar_metrica(row, "dl_ebitda"))
+        with v3:
+            fr = row["fco_sobre_receita"] if "fco_sobre_receita" in row.index else float("nan")
+            st.metric("FCO / Receita", fmt_pct(100 * float(fr)) if pd.notna(fr) else "—")
+            _zoom_popover("Como?", explicar_metrica(row, "fco_receita"))
+        with v4:
+            st.metric("Multiplicador setorial", fmt_num(row.get("mult_setor", 1), 2))
+            _zoom_popover("Como?", explicar_metrica(row, "mult_setor"))
 
     st.markdown(f"#### Pares do setor ({setor})")
+    st.caption("Clique em uma empresa para o zoom completo do funil dela.")
     peer_cols = [
         c
         for c in [
@@ -553,7 +656,8 @@ A ordenação usa o score 0–100 (1º = melhor).
         ]
         if c in peers.columns
     ]
-    peers_show = peers.nsmallest(min(10, len(peers)), "rank")[peer_cols].copy()
+    peers_raw = peers.nsmallest(min(10, len(peers)), "rank")[peer_cols].copy()
+    peers_show = peers_raw.copy()
     if "obj3_potencial_final_rs" in peers_show.columns:
         peers_show["obj3_potencial_final_rs"] = peers_show["obj3_potencial_final_rs"].map(fmt_money)
     if "obj1_teto_rs" in peers_show.columns:
@@ -568,7 +672,20 @@ A ordenação usa o score 0–100 (1º = melhor).
             "f_fin": "F",
         }
     )
-    st.dataframe(peers_show, hide_index=True, use_container_width=True)
+    evento_peers = st.dataframe(
+        peers_show,
+        hide_index=True,
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key=f"zoom_peers_{escolhida}",
+    )
+    sel_peers = evento_peers.selection.rows if evento_peers and evento_peers.selection else []
+    if sel_peers:
+        nome_peer = str(peers_raw.iloc[sel_peers[0]]["DENOM_CIA"])
+        peer_row = df[df["DENOM_CIA"] == nome_peer].iloc[0]
+        with st.expander(f"Zoom: {nome_peer}", expanded=True):
+            st.markdown(explicar_empresa_resumo(peer_row, n_painel=n_painel))
 
     ficha = pd.DataFrame([row])
     st.download_button(
@@ -604,6 +721,10 @@ def pagina_ranking(df: pd.DataFrame, year: int) -> None:
     c2.metric("Exibidas agora", f"{len(view):,}")
     c3.metric("Score médio", f"{df['score_0_100'].mean():.1f}")
     c4.metric("Ano", str(year))
+    st.caption(
+        "Clique em uma **empresa** da tabela para abrir o zoom completo "
+        "(teto, viável, final, índice e motivo de zeros)."
+    )
     show_cols = [
         c
         for c in [
@@ -645,7 +766,42 @@ def pagina_ranking(df: pd.DataFrame, year: int) -> None:
             "receita": "Receita",
         }
     )
-    st.dataframe(display, use_container_width=True, hide_index=True, height=420)
+    evento_rank = st.dataframe(
+        display,
+        use_container_width=True,
+        hide_index=True,
+        height=420,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="zoom_ranking",
+    )
+    sel_rank = evento_rank.selection.rows if evento_rank and evento_rank.selection else []
+    if sel_rank:
+        nome_sel = str(view.iloc[sel_rank[0]]["DENOM_CIA"])
+        row_sel = df[df["DENOM_CIA"] == nome_sel].iloc[0]
+        with st.expander(f"Zoom: {nome_sel}", expanded=True):
+            tabs = st.tabs(["Resumo do funil", "Teto", "Viável", "Final", "Índice 0–100"])
+            with tabs[0]:
+                st.markdown(explicar_empresa_resumo(row_sel, n_painel=len(df)))
+            with tabs[1]:
+                st.markdown(explicar_teto(row_sel))
+                st.markdown("#### Linhas do teto")
+                for rotulo in ["SG&A", "Vendas", "Pessoal", "CPV", "PDD", "Estoques"]:
+                    with st.popover(rotulo):
+                        st.markdown(explicar_linha_teto(row_sel, rotulo))
+            with tabs[2]:
+                st.markdown(explicar_viavel(row_sel))
+            with tabs[3]:
+                st.markdown(explicar_final(row_sel))
+            with tabs[4]:
+                st.markdown(explicar_score(row_sel, n_painel=len(df)))
+            if st.button(
+                f"Abrir ficha completa de {nome_sel[:40]}",
+                key=f"ir_ficha_{sel_rank[0]}",
+            ):
+                st.session_state["empresa_selecionada"] = nome_sel
+                st.session_state["nav_principal"] = "Empresa"
+                st.rerun()
 
     col_a, col_b = st.columns(2)
     with col_a:
